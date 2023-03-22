@@ -2,23 +2,21 @@
 
 //! # Host / Platform Owner
 //!
-//! The Platform Owner, or Host, may still perform all of the legacy SEV functions, but now also has the capability to:
-//!
-//! - Request an SNP Platform Status
-//! - Load policy configurations and/or certificate chains into hypervisor memory.
-//! - Request copies of the current policy configuration and/or certificate chains stored in hypervisor memory.
+//! The Platform Owner, Host, or Cloud Service Provider (CSP). This is the system software, including the hypervisor, where a confidential virtual-machine (VM) or container will be deployed.
 //!
 //!
-//! ### Operating System Requirements:
+//! ## System Requirements:
 //!
 //!
-//! Development for SEV-SNP is on-going, and is estimated to be committed into the upstream Linux Kernel by version 6.3. Until it is upstream, it is recommended to use a branch from the AMD fork of the Linux kernel. At the time of writing, this is [sev-snp-iommu-avic_5.19-rc6_v4](https://github.com/AMDESE/linux/tree/sev-snp-iommu-avic_5.19-rc6_v4).
+//! ### Kernel Requirements:
+//!
+//! Development for SEV-SNP is on-going. Until it is upstream, it is recommended to use a branch from the AMD fork of the Linux kernel. At the time of writing, this is [sev-snp-iommu-avic_5.19-rc6_v4](https://github.com/AMDESE/linux/tree/sev-snp-iommu-avic_5.19-rc6_v4).
 //!
 //!
 //! ### Hardware / Firmware Requirements:
 //!
 //!
-//! In order to use [snp](https://github.com/virtee/snp), it is recommended to have the firmware up-to-date -- ([version 1.54](https://developer.amd.com/wp-content/resources/amd_sev_fam19h_model0xh_1.54.01.zip)) at time of writing.
+//! The [snp](https://github.com/virtee/snp) crate is compatible with firmware ([version 1.54.01](https://download.amd.com/developer/eula/sev/amd_sev_fam19h_model0xh_1.54.01.zip)).
 //!
 //!
 //! ### Software Requirements:
@@ -44,37 +42,69 @@
 //!
 //! # Examples:
 //!
-//! ### Loading and Requesting Policy and/or Certificate Chain:
+//! ## API Capabilities:
 //!
+//! Platform owners are offered the following capabilities:
 //!
-//! A Platform Owner my decide to store policies and certificate-chains into hypervisor memory for Guest Owner ease-of-use. Further, this mitigates the potential issues found from attempting to access the AMD Key Distribution Server (KDS); which is rate-limited.
+//! -   Request the Status of the AMD Secure Processor.
 //!
+//! -   Load New Extended Configurations
 //!
-//! #### Configuration Loading Example:
+//! -   Request Existing Extended Configurations
 //!
+//! By deciding to store policies and certificate-chains in hypervisor
+//! memory, the platform owner promotes greater guest owner ease-of-use.
+//! Further, it reduces the dependency of CSP operations on AMD's Key
+//! Distribution Server (KDS).
 //!
-//! 1. Include the `snp` crate into your Rust project.
+//! ### Request the Status of the AMD Secure Processor:
+//!
+//! 1.  Include the `snp`
+//!     crate into your Rust project.
 //!
 //!     ```no_run
 //!     // Import library
 //!     use snp::firmware::host::types::*;
 //!     ```
 //!
-//!
-//!
-//! 2. Read the bytes of the certificates which will be stored in Hypervisor memory. This could be done with `include_bytes!()`, or by some other means. This example will use `include_bytes!()`.
+//! 2.  Connect to the firmware and request for the status of the AMD Secure
+//!     Processor:
 //!
 //!     ```no_run
-//!     // Read certificate bytes. This could be done by reading bytes from a file
-//!     // with `include_bytes!()` or by some other means.
+//!     // Open a connection to the firmware.
+//!     let mut firmware: Firmware = Firmware::open().unwrap();
+//!
+//!     // Request the current status of the AMD Secure Processor.
+//!     let status: SnpPlatformStatus = firmware.snp_platform_status().unwrap();
+//!     ```
+//!
+//! ### Load New Extended Configurations:
+//!
+//! 1.  Include the `snp`
+//!     crate into your Rust project.
+//!
+//!     ```no_run
+//!     // Import library
+//!     use snp::firmware::host::types::*;
+//!     ```
+//!
+//! 2.  Read the bytes of the certificates which will be stored in
+//!     Hypervisor memory. This could be done with
+//!     `include_bytes!()`,
+//!     or by some other means. This example will use
+//!     `include_bytes!()`.
+//!
+//!     ```no_run
+//!     // Read certificate bytes.
 //!     pub const ARK: &[u8] = include_bytes!("ark.pem");
 //!     pub const ASK: &[u8] = include_bytes!("ask.pem");
 //!     pub const VCEK: &[u8] = include_bytes!("vcek.pem");
 //!     ```
 //!
-//! 3. Create a configuration for when guests request an extended report:
+//! 3.  Create a configuration for when guests request an extended report
+//!     (**choose one**):
 //!
-//!     - OPTION A: Certificates Only
+//!     -   **OPTION A**: Certificates Only
 //!
 //!         ```no_run
 //!         // Generate a vector of certificates to store in hypervisor memory.
@@ -85,12 +115,12 @@
 //!         ];
 //!
 //!         // Call the `update_certs_only` constructor to generate the extended configuration.
-//!         let ext_config: SnpExtConfig = SnpExtConfig::update_certs_only(certificates);
+//!         let ext_config: SnpExtConfig = SnpExtConfig::update_certs_only(
+//!             certificates
+//!         );
 //!         ```
 //!
-//!
-//!     - OPTION B: Configuration Only
-//!
+//!     -   **OPTION B**: Configuration Only
 //!
 //!         ```no_run
 //!         // Specify the desired configuration
@@ -100,12 +130,12 @@
 //!         );
 //!
 //!         // Call the `update_config_only` constructor to generate the extended configuration.
-//!         let ext_config: SnpExtConfig = SnpExtConfig::update_config_only(configuration);
+//!         let ext_config: SnpExtConfig = SnpExtConfig::update_config_only(
+//!             configuration
+//!         );
 //!         ```
 //!
-//!
-//!     - OPTION C: Configuration and Certificates
-//!
+//!     -   **OPTION C**: Configuration and Certificates
 //!
 //!         ```no_run
 //!         // Specify the desired configuration
@@ -122,28 +152,37 @@
 //!         ];
 //!
 //!         // Call the `new` constructor to generate the extended configuration.
-//!         let ext_config: SnpExtConfig = SnpExtConfig::new(configuration, certificates);
+//!         let ext_config: SnpExtConfig = SnpExtConfig::new(
+//!             configuration,
+//!             certificates
+//!         );
 //!         ```
 //!
-//! 4. Connect to the firmware and forward the extended request to the AMD Secure Processor:
+//! 4.  Connect to the firmware and forward the extended request to the AMD
+//!     Secure Processor:
 //!
 //!     ```no_run
 //!     // Open a connection to the firmware.
 //!     let mut fw: Firmware = Firmware::open().unwrap();
 //!
-//!     // Forward the certificates to the PSP to be loaded.
+//!     // Forward the certificates to the AMD Secure Processor to be loaded.
 //!     if let Err(error) = fw.snp_set_ext_config(&ext_config) {
 //!         // Handle an error if one is encountered.
 //!         ...
 //!     }
 //!     ```
 //!
+//! ### Request Existing Extended Configurations:
 //!
-//! #### Requesting Example:
+//! 1.  Include the `snp`
+//!     crate into your Rust project.
 //!
+//!     ```no_run
+//!     // Import library
+//!     use snp::firmware::host::types::*;
+//!     ```
 //!
-//! 1. Connect to the firmware and request for the current configuration:
-//!
+//! 2.  Connect to the firmware and request for the current configuration:
 //!
 //!     ```no_run
 //!     // Open a connection to the firmware.
@@ -152,8 +191,6 @@
 //!     // Request the current configuration.
 //!     let current_configuration: SnpExtConfig = fw.snp_get_ext_config().unwrap();
 //!     ```
-//!
-//!
 
 pub mod types;
 

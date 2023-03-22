@@ -101,7 +101,7 @@ impl Display for VmmError {
     }
 }
 
-/// The ra
+/// The raw firmware error.
 #[derive(Debug)]
 pub(crate) struct RawFwError(u64);
 

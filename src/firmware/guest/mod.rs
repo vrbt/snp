@@ -2,35 +2,47 @@
 
 //! # Guest Owner
 //!
-//! The Guest Owner -- or guest -- is offered the capabilities to:
+//! The Guest owner is a tenant of a virtualization provider. They may have
+//! one or more guest confidential virtual-machines (VM) or containers which
+//! may be deployed in a Platform Owner's environment..
 //!
-//! - Request a standard attestation report
-//! - Request an extended attestation report
-//! - Request a unique key cryptographically derived from a known hardware trusted compute base.
+//! ## System Requirements:
 //!
+//! Guest-level support has been completed, and is upstream. In order to
+//! access the guest driver, use Linux Kernel 5.19 or newer.
 //!
-//! ### Operating System Requirements:
+//! ## API Capabilities:
 //!
-//! - Linux Kernel 5.19 or newer
+//! The Guest Owner is offered the following capabilities:
 //!
-//! # Examples:
+//! -   Request a Standard Attestation report
 //!
-//! #### Requesting and Attesting a Standard Attestation Report:
+//! -   Request an Extended Attestation Report
 //!
+//! -   Request a unique key cryptographically derived from a hardware-owned
+//!     secret.
 //!
-//! 1. **Import the necessary pieces from the crate:**
+//! Although not within the scope of this library, possible attestation
+//! practices have been included.
+//!
+//! ### Requesting and Attesting a Standard Attestation Report:
+//!
+//! 1.  Import the necessary pieces from the crate
+//!
 //!     ```no_run
+//!     // Import the modules
 //!     use sev::firmware::{
-//!         guest::{
-//!             types::*,
-//!             Firmware,
-//!         },
-//!         host::types::*,
+//!             guest::{
+//!                 types::*,
+//!                 Firmware,
+//!             },
+//!             host::types::*
 //!     };
 //!     ```
 //!
+//! 2.  Create and supply 64 bytes of unique data to include in the
+//!     attestation report
 //!
-//! 2. **Create and supply 64 bytes of unique data to include in the attestation report:**
 //!     ```no_run
 //!     // This could be a unique message, a public key, etc.
 //!     let unique_data: [u8; 64] = [
@@ -39,15 +51,21 @@
 //!         98, 101, 115, 116, 32, 67, 80, 85, 115, 33, 32, 65, 77, 68, 32, 82, 111, 99, 107, 115,
 //!         33, 33, 33, 33, 33, 33,
 //!     ];
-//!
 //!     ```
-//! 3. **Request the report:**
-//!     1. Construct an [`SnpReportReq`](crate::firmware::guest::types::SnpReportReq) from the unique data provided.
+//!
+//! 3.  Request the Report:
+//!
+//!     1.  Construct a
+//!         [`SnpReportReq`](crate::firmware::linux::guest::types::SnpReportReq)
+//!         from the unique data provided.
+//!
 //!         ```no_run
 //!         // Specify the VMPL desired. This example will use zero.
 //!         let request: SnpReportReq = SnpReportReq::new(Some(unique_data), 0);
 //!         ```
-//!     2. Connect to the firmware and request an attestation report
+//!
+//!     2.  Connect to the firmware and request an attestation report
+//!
 //!         ```no_run
 //!         // Open a connection to the firmware.
 //!         let mut fw: Firmware = Firmware::open()?;
@@ -55,20 +73,27 @@
 //!         // Request a standard attestation report.
 //!         let attestation_report: AttestationReport = fw.snp_get_report(None, request);
 //!         ```
-//! 4. **Validate the Root of Trust:**
 //!
-//!     One of the most significant steps in the attestation process is attesting the root of trust. The [openssl](https://crates.io/crates/openssl) crate provides all of the needed tools to verify the signature chain. AMD's current root of trust is as follows:
+//! 4.  Validate the Root of Trust:  \
+//!      \
+//!     One of the most significant steps in the attestation process is
+//!     authenticating the root of trust. The
+//!     [openssl](<https://crates.io/crates/openssl>) crate provides all of
+//!     the needed tools to verify the signature chain. AMD's current root
+//!     of trust is as follows:
 //!
-//!     1. The AMD Root Key (ARK) is self-signed.
-//!     2. The ARK signed the AMD Signing Key (ASK).
-//!     3. The ASK signed the **V**ersioned **C**hip **E**ndorsement **K**ey (VCEK), or the **V**ersioned **L**icense **E**ndorsement **K**ey (VLEK).
+//!     1.  The AMD Root Key (ARK) is self-signed.
 //!
+//!     2.  The ARK signed the AMD Signing Key (ASK).
 //!
-//!     Following is an example of how this may be done for a standard attestation report:
+//!     3.  The ASK signed the **V**ersioned **C**hip **E**ndorsement
+//!         **K**ey (**VCEK**), or the **V**ersioned **L**oaded
+//!         **E**ndorsement **K**ey (**VLEK**).
 //!
+//!     Following is an example of how this may be done:
 //!
-//!     1. Import the necessary pieces from the `openssl` crate.
-//!
+//!     1.  Import the necessary pieces from the
+//!         `openssl` crate.
 //!
 //!         ```no_run
 //!         use openssl::{
@@ -80,10 +105,13 @@
 //!         };
 //!         ```
 //!
-//!
-//!     2. Pull the certificate chain from the AMD Key Distribution Server (KDS). Details for requesting the certificates may be found in the [VCEK Specification](https://www.amd.com/system/files/TechDocs/57230.pdf#page=15). Please note that all fields are expected to be a minimum of two characters in length, as well as zero-padded (ex. 8 => 08). You will find the `hwid` matches the `chip_id` on the attestation report.
-//!
-//!
+//!     2.  Pull the certificate chain from the AMD Key Distribution Server
+//!         (KDS). Details for requesting the certificates may be found in
+//!         the [VCEK
+//!         Specification](https://www.amd.com/system/files/TechDocs/57230.pdf#page=15).
+//!         Please note that all fields are expected to be a minimum of two
+//!         characters in length, as well as zero-padded (ex. 8 => 08). You
+//!         will find the `hwid` matches the `chip_id` on the attestation report.
 //!
 //!         ```no_run
 //!         const KDS_CERT_SITE: &str = "https://kdsintf.amd.com";
@@ -111,11 +139,12 @@
 //!         pub fn request_vcek(chip_id: [u8; 64], reported_tcb: TcbVersion) -> X509 {
 //!             let hw_id: String = hexify(&chip_id);
 //!             let url: String = format!(
-//!                 "{KDS_CERT_SITE}{KDS_VCEK}/{SEV_PROD_NAME}/{hw_id}?blSPL={:02}&teeSPL={:02}&snpSPL={:02}&ucodeSPL={:02}",
-//!                 reported_tcb.boot_loader,
-//!                 reported_tcb.tee,
-//!                 reported_tcb.snp,
-//!                 reported_tcb.microcode
+//!             "{KDS_CERT_SITE}{KDS_VCEK}/{SEV_PROD_NAME}/\
+//!             {hw_id}?blSPL={:02}&teeSPL={:02}&snpSPL={:02}&ucodeSPL={:02}",
+//!             reported_tcb.boot_loader,
+//!             reported_tcb.tee,
+//!             reported_tcb.snp,
+//!             reported_tcb.microcode
 //!             );
 //!
 //!             println!("Requesting VCEK from: {url}\n");
@@ -126,8 +155,7 @@
 //!         }
 //!         ```
 //!
-//!
-//!     3. Verify the Root of Trust.
+//!     3.  Verify the Root of Trust
 //!
 //!         ```no_run
 //!         let (ask, ark): (X509, X509) = request_cert_chain("milan");
@@ -142,13 +170,12 @@
 //!         let ark_pubkey: PKey<Public> = ark.public_key().unwrap();
 //!         let ask_pubkey: PKey<Public> = ask.public_key().unwrap();
 //!
-//!         if ark.verify(&ark_pubkey)? {
+//!         if ark.verify(&ark_pubkey).unwrap() {
 //!             println!("The AMD ARK was self-signed...");
-//!             if ask.verify(&ark_pubkey)? {
+//!             if ask.verify(&ark_pubkey).unwrap() {
 //!                 println!("The AMD ASK was signed by the AMD ARK...");
-//!                 if vcek.verify(&ask_pubkey)? {
+//!                 if vcek.verify(&ask_pubkey).unwrap() {
 //!                     println!("The VCEK was signed by the AMD ASK...");
-//!                     valid = true
 //!                 } else {
 //!                     eprintln!("The VCEK was not signed by the AMD ASK!");
 //!                 }
@@ -160,23 +187,34 @@
 //!         }
 //!         ```
 //!
+//! 5.  Verify the Trusted Compute Base of the Guest:  \
+//!      \
+//!     The Following fields should be verified in an Attestation Report and
+//!     a VCEK or VLEK:
 //!
-//! 5. **Verify the Trusted Compute Base**
+//!     -   Bootloader
 //!
-//!     The following fields should always be verified between an Attestation Report and a VCEK or VLEK:
+//!     -   TEE
 //!
-//!     - Bootloader
-//!     - TEE
-//!     - SNP
-//!     - Microcode
-//!     - Chip ID
+//!     -   SNP
 //!
-//!     Unfortunately, the `openssl` crate does not support validating X509v3 Extensions (at time of writing). One possible solution is to use the [x509_parser](https://docs.rs/x509-parser/0.14.0/x509_parser/) crate, in conjunction with the [asn1_rs](https://docs.rs/asn1-rs/latest/asn1_rs/index.html) crate (for OIDs). The following examples will be built off of these definitions:
+//!     -   Microcode
 //!
-//!     <u>Relevant X509v3 Extension OIDs:</u>
+//!     -   Chip ID
 //!
+//!     Unfortunately, the `openssl` crate does
+//!     not support validating X509v3 Extensions (at time of writing). One
+//!     possible solution is to use the
+//!     [x509_parser](https://docs.rs/x509-parser/0.14.0/x509_parser/)
+//!     crate, in conjunction with the
+//!     [asn1_rs](https://docs.rs/asn1-rs/latest/asn1_rs/index.html) crate
+//!     (for OIDs). The following examples will be built off of these
+//!     definitions:
 //!
 //!     ```no_run
+//!     /***********************************************************************************************
+//!      *                               RELEVANT X509v3 EXTENSION OIDS
+//!      ***********************************************************************************************/
 //!     use asn1_rs::{oid, Oid};
 //!     use x509_parser::{
 //!         self,
@@ -210,13 +248,13 @@
 //!             write!(f, "{}", self.oid().to_id_string())
 //!         }
 //!     }
-//!     ```
 //!
 //!
-//!     <u>Helper Functions:</u>
+//!     /***********************************************************************************************
+//!      *                                       HELPER FUNCTIONS
+//!      ***********************************************************************************************/
 //!
 //!
-//!     ```no_run
 //!     fn check_cert_ext_byte(ext: &X509Extension, val: u8) -> bool {
 //!         if ext.value[0] != 0x2 {
 //!             panic!("Invalid type encountered!");
@@ -236,11 +274,12 @@
 //!     fn check_cert_ext_bytes(ext: &X509Extension, val: &[u8]) -> bool {
 //!         ext.value == val
 //!     }
-//!     ```
 //!
-//!     Example:
 //!
-//!     ```no_run
+//!     /************************************************************************************************
+//!      *                                  EXAMPLE ATTESTATION FUNCTION:
+//!      ***********************************************************************************************/
+//!
 //!     fn validate_cert_metadata(
 //!         cert: &X509Certificate,
 //!         report: &AttestationReport,
@@ -291,13 +330,12 @@
 //!     }
 //!     ```
 //!
-//!
-//! 6. **Verify Attestation Report Signature by VCEK/VLEK**
-//!
-//!     The last step is to verify the signature contained on the Attestation Report truly came from the VCEK/VLEK.
+//! 6.  Verify Attestation Report Signature by VCEK/VLEK \
+//!      \
+//!     The last step is to verify the signature contained on the
+//!     Attestation Report truly came from the VCEK/VLEK. \
 //!
 //!     ```no_run
-//!
 //!     let ar_signature: EcdsaSig = EcdsaSig::try_from(&report.signature).unwrap();
 //!     let signed_bytes: &[u8] = &bincode::serialize(&report).unwrap()[0x0..0x2A0];
 //!
@@ -314,10 +352,10 @@
 //!     }
 //!     ```
 //!
-//! #### Requesting and Attesting an Extended Attestation Report:
+//! ### Requesting and Attesting an Extended Attestation Report:
 //!
-//!
-//! 1. **Create and supply 64 bytes of unique data to include in the attestation report**
+//! 1.  Create and supply 64 bytes of unique data to include in the
+//!     attestation report
 //!
 //!     ```no_run
 //!     // This could be a unique message, a public key, etc.
@@ -327,28 +365,33 @@
 //!         98, 101, 115, 116, 32, 67, 80, 85, 115, 33, 32, 65, 77, 68, 32, 82, 111, 99, 107, 115,
 //!         33, 33, 33, 33, 33, 33,
 //!     ];
-//!
 //!     ```
-//! 2. **Construct an [`SnpReportReq`](crate::firmware::guest::types::SnpReportReq) from the unique data provided.**
+//!
+//! 2.  Construct a
+//!     `SnpReportReq` from
+//!     the unique data provided.
+//!
 //!     ```no_run
 //!     // Specify the VMPL desired. This example will use zero.
 //!     let request: SnpReportReq = SnpReportReq::new(Some(unique_data), 0);
 //!     ```
-//! 2. **Connect to the Firmware and Request the Extended Report**
+//!
+//! 3.  Connect to the Firmware and Request the Extended Report
+//!
 //!     ```no_run
 //!     let mut fw: Firmware = Firmware::open().unwrap();
-//!     let (extended_report, certificates) = fw.snp_get_ext_report(None, request)
+//!
+//!     let (extended_report, certificates): (AttestationReport, Vec<CertTableEntry>) = fw.snp_get_ext_report(None, request)
 //!     ```
 //!
+//! 4.  Verify the Root of Trust:
 //!
-//! 3. **Verify the Root of Trust**
-//!
-//!     - Parse the ARK, ASK, and VCEK obtained from the AMD Secure Processor:
+//!     1.  Parse the ARK, ASK, and VCEK obtained from the AMD Secure
+//!         Processor:
 //!
 //!         ```no_run
-//!
 //!         // Assuming we have created a structure called AMDCerts, like this:
-//!         #[derive(Clone, Debug, Default)]
+//!         #[(Clone, Debug, Default)]
 //!         struct AMDCerts {
 //!             pub ask: Option<X509>,
 //!             pub ark: Option<X509>,
@@ -375,33 +418,31 @@
 //!         }
 //!         ```
 //!
-//!     - Proceed with Standard Attestation Report Root of Trust Verification, skipping the HTTP requests to the AMD Key Distribution Server.
+//!     2.  Proceed with Standard Attestation Report Root of Trust
+//!         Verification, skipping the HTTP requests to the AMD Key
+//!         Distribution Server.
 //!
+//! ### Requesting a Derived Key:
 //!
-//! 4. **Verify the Trusted Compute Base**
+//! There are many use-cases when a Guest Owner may wish to generate a
+//! unique encryption key which has been derived from the Hardware Root of
+//! Trust. The guest can request that the key derivation be made dependent
+//! on several TCB related parameters which allow the guest to rederive the
+//! key only when the same parameter(s) are provided..
 //!
-//!     - Proceed with Standard Attestation Trusted Compute Base Verification.
-//!
-//!
-//! 5. **Verify Extended Attestation Report Signature by VCEK**
-//!
-//!     - Proceed with Standard Attestation Report Signature verification.
-//!
-//!
-//! #### Requesting a Derived Key:
-//!
-//! There are many use-cases when a Guest Owner may wish to generate a unique encryption key which has been derived from the Hardware Root of Trust. These keys are guaranteed to only be derivable from a unique TCB.
-//!
-//! 1. **Construct an [`SnpDerivedKey`](crate::firmware::guest::types::SnpDerivedKey) as per the API specification:**
+//! 1.  Construct a
+//!     `SnpDerivedKey` as
+//!     per the specification:
 //!
 //!     ```no_run
 //!     let request: SnpDerivedKey = SnpDerivedKey::new(false, GuestFieldSelect(1), 0, 0, 0);
 //!     ```
 //!
-//! 2. **Connect to the Firmware and request a derived key:**
+//! 2.  Connect to the Firmware and request a derived key:
 //!
 //!     ```no_run
 //!     let mut fw: Firmware = Firmware::open().unwrap();
+//!
 //!     let derived_key: SnpDerivedKeyRsp = fw.snp_get_derived_key(None, request).unwrap();
 //!     ```
 //!

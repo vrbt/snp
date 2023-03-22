@@ -21,7 +21,6 @@ const R_S_SIZE: usize = SIG_PIECE_SIZE * 2usize;
 #[repr(C)]
 #[derive(Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
-
 pub struct Signature {
     #[cfg_attr(feature = "serde", serde(with = "BigArray"))]
     r: [u8; 72],
