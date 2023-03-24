@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use snp::firmware::host::Firmware;
-use snp::launch::snp::*;
+use snp::launch::*;
 
 pub use kvm_bindings::kvm_segment as KvmSegment;
 

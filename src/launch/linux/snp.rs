@@ -2,7 +2,7 @@
 
 //! Types for interacting with the KVM SEV-SNP guest management API.
 
-use crate::launch::snp::*;
+use crate::launch::*;
 
 use std::marker::PhantomData;
 
