@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
-use sev::firmware::host::Firmware;
-use sev::launch::snp::*;
+use snp::firmware::host::Firmware;
+use snp::launch::snp::*;
 
 pub use kvm_bindings::kvm_segment as KvmSegment;
+
 use kvm_bindings::kvm_userspace_memory_region;
 use kvm_ioctls::{Kvm, VcpuExit};
 use mmarinus::{perms, Map};

@@ -617,7 +617,6 @@ impl Firmware {
         Ok((report_response.report, certificates))
     }
 
-
     /// Fetches a derived key from the AMD Secure Processor. The `message_version` will default to `1` if `None` is specified.
     ///
     /// # Example:

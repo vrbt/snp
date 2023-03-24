@@ -30,6 +30,13 @@ static_assertions = { version = "^1.1" }
 openssl = { version = "^0.10", optional = true }
 iocuddle = { version = "^0.1" }
 uuid = { version = "^1.2" }
+dirs = { version = "^4.0" }
+kvm-ioctls = { version = ">=0.12" }
 
 [features]
 serde = ["dep:serde", "dep:serde-big-array", "uuid/serde"]
+
+[dev-dependencies]
+kvm-bindings = ">=0.6"
+mmarinus = "0.4"
+serial_test = "0.8"

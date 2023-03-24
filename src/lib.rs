@@ -13,7 +13,6 @@
 //! - [`Guest Owners`](crate::firmware::guest)
 //!
 
-
 mod util;
 
 /// Includes built-in AMD certificates for verification of the root of trust.
@@ -24,3 +23,6 @@ pub mod error;
 
 /// Structures and implementations for communicating with the AMD Secure Processor.
 pub mod firmware;
+
+/// Structures and implementations for guest management of SNP machines.
+pub mod launch;
