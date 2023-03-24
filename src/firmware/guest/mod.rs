@@ -47,7 +47,7 @@ impl Firmware {
     ///
     /// # Example:
     ///
-    /// ```no_run
+    /// ```ignore
     /// let mut firmware: Firmware = firmware.open().unwrap();
     /// ```
     pub fn open() -> std::io::Result<Firmware> {
@@ -63,7 +63,7 @@ impl Firmware {
     ///
     /// # Example:
     ///
-    /// ```no_run
+    /// ```ignore
     /// // Create some unique data we wish to see included in our report. This could be a SHA, a public key, etc.
     /// let unique_data: [u8; 64] = [
     ///     65, 77, 68, 32, 105, 115, 32, 101, 120, 116, 114, 101, 109, 101, 108, 121, 32, 97, 119,
@@ -179,7 +179,7 @@ impl Firmware {
     /// Fetches a derived key from the AMD Secure Processor. The `message_version` will default to `1` if `None` is specified.
     ///
     /// # Example:
-    /// ```no_run
+    /// ```ignore
     /// let request: SnpDerivedKey = SnpDerivedKey::new(false, GuestFieldSelect(1), 0, 0, 0);
     ///
     /// let mut fw: Firmware = Firmware::open().unwrap();

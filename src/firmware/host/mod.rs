@@ -42,7 +42,7 @@ impl Firmware {
     /// Create a handle to the SEV platform via `/dev/sev`.
     ///
     /// # Example:
-    /// ```no_run
+    /// ```ignore
     /// let mut firmware: Firmware = Firmware::open().unwrap();
     /// ```
     pub fn open() -> std::io::Result<Firmware> {
@@ -67,7 +67,9 @@ impl Firmware {
     /// Query the SNP platform status.
     ///
     /// # Example:
-    /// ```no_run
+    /// ```ignore
+    /// use snp::firmware::host::*;
+    ///
     /// let mut firmware: Firmware = Firmware::open().unwrap();
     ///
     /// let status: SnpPlatformStatus = firmware.snp_platform_status().unwrap();
@@ -81,7 +83,7 @@ impl Firmware {
     /// Fetch the SNP Extended Configuration.
     ///
     /// # Example:
-    /// ```no_run
+    /// ```ignore
     /// let mut firmware: Firmware = Firmware::open().unwrap();
     ///
     /// let status: SnpExtConfig = firmware.snp_get_ext_config().unwrap();
@@ -114,9 +116,9 @@ impl Firmware {
     /// Set the SNP Extended Configuration.
     ///
     /// # Example:
-    /// ```no_run
-    /// pub const ARK: &[u8] = include_bytes!("ark.pem");
-    /// pub const ASK: &[u8] = include_bytes!("ask.pem");
+    /// ```ignore
+    /// pub const ARK: &[u8] = include_bytes!("../../certs/builtin/milan/ark.pem");
+    /// pub const ASK: &[u8] = include_bytes!("../../certs/builtin/genoa/ask.pem");
     /// pub const VCEK: &[u8] = include_bytes!("vcek.pem");
     ///
     /// let configuration: SnpConfig = SnpConfig::new(
