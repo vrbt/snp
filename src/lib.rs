@@ -6,12 +6,6 @@
 //!
 //! The [VirTEE/snp](https://github.com/virtee/snp) crate offers a rust-friendly, simple-to-use API for interfacing with the AMD Secure Processor included within 3rd Generation -- or newer -- AMD EPYC processors.
 //!
-//! Examples, use-cases, and potential solutions:
-//!
-//! - [`Platform Owners`](crate::firmware::host)
-//!
-//! - [`Guest Owners`](crate::firmware::guest)
-//!
 
 mod util;
 
