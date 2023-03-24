@@ -11,6 +11,26 @@ pub(crate) use crate::firmware::linux::host as FFI;
 /// A representation of the type of data provided to [`parse_table`](crate::firmware::host::parse_table)
 pub use crate::firmware::linux::host::types::RawData;
 
+/// The CPU-unique identifier for the platform.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Identifier(pub Vec<u8>);
+
+impl From<Identifier> for Vec<u8> {
+    fn from(id: Identifier) -> Vec<u8> {
+        id.0
+    }
+}
+
+impl std::fmt::Display for Identifier {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        for b in self.0.iter() {
+            write!(f, "{b:02X}")?;
+        }
+
+        Ok(())
+    }
+}
+
 bitflags::bitflags! {
     /// The platform's status flags.
     #[derive(Default)]

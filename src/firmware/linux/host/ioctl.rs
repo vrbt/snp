@@ -10,12 +10,16 @@ use crate::impl_const_id;
 // source code: include/uapi/linux/psp-sev.h
 impl_const_id! {
     pub Id => u32;
+    GetId<'_> = 0x8,
     SnpPlatformStatus = 0x9,
     SnpSetExtConfig = 0xA,
     SnpGetExtConfig = 0xB,
 }
 
 const SEV: Group = Group::new(b'S');
+
+/// Get the CPU's unique ID that can be used for getting a certificate for the VCEK public key.
+pub const GET_ID: Ioctl<WriteRead, &Command<GetId<'_>>> = unsafe { SEV.write_read(0) };
 
 /// Return information about the current status and capabilities of the SEV-SNP platform.
 pub const SNP_PLATFORM_STATUS: Ioctl<WriteRead, &Command<SnpPlatformStatus>> =

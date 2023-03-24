@@ -9,6 +9,14 @@ use serial_test::serial;
 
 #[cfg_attr(not(has_sev), ignore)]
 #[test]
+fn get_identifier() {
+    let mut fw = Firmware::open().unwrap();
+    let id = fw.get_identifier().unwrap();
+    assert_ne!(Vec::from(id), vec![0u8; 64]);
+}
+
+#[cfg_attr(not(has_sev), ignore)]
+#[test]
 fn platform_status() {
     let mut fw: Firmware = Firmware::open().unwrap();
     let status: SnpPlatformStatus = fw.snp_platform_status().unwrap();

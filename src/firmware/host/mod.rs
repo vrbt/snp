@@ -204,7 +204,7 @@ use types::*;
 
 use FFI::ioctl::*;
 
-use self::types::FFI::types::TryFromConfig;
+use self::types::FFI::types::{GetId, TryFromConfig};
 
 ///
 /// This is a façade function to give public access to the FFI parse table
@@ -237,6 +237,19 @@ impl Firmware {
         Ok(Firmware(
             OpenOptions::new().read(true).write(true).open("/dev/sev")?,
         ))
+    }
+
+    /// Get the unique CPU identifier.
+    ///
+    /// This is especially helpful for sending AMD an HTTP request to fetch
+    /// the signed CEK certificate.
+    pub fn get_identifier(&mut self) -> Result<Identifier, Indeterminate<Error>> {
+        let mut bytes = [0u8; 64];
+        let mut id = GetId::new(&mut bytes);
+
+        GET_ID.ioctl(&mut self.0, &mut Command::from_mut(&mut id))?;
+
+        Ok(Identifier(id.as_slice().to_vec()))
     }
 
     /// Query the SNP platform status.

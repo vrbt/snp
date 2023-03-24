@@ -6,7 +6,33 @@ use crate::{
     firmware::linux::guest::types::_4K_PAGE,
 };
 
+use std::marker::PhantomData;
 use uuid::Uuid;
+
+/// Get the CPU's unique ID that can be used for getting
+/// a certificate for the CEK public key.
+#[repr(C, packed)]
+pub struct GetId<'a> {
+    id_addr: u64,
+    id_len: u32,
+    _phantom: PhantomData<&'a ()>,
+}
+
+impl<'a> GetId<'a> {
+    pub fn new(id: &'a mut [u8; 64]) -> Self {
+        Self {
+            id_addr: id.as_mut_ptr() as _,
+            id_len: id.len() as _,
+            _phantom: PhantomData,
+        }
+    }
+
+    /// This method is only meaningful if called *after* the GET_ID2 ioctl is called because the
+    /// kernel will write the length of the unique CPU ID to `GetId.id_len`.
+    pub fn as_slice(&self) -> &[u8] {
+        unsafe { std::slice::from_raw_parts(self.id_addr as *const u8, self.id_len as _) }
+    }
+}
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum RawData {
