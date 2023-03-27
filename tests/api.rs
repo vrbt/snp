@@ -59,19 +59,11 @@ fn build_ext_config(cert: bool, cfg: bool) -> SnpExtConfig {
         CertTableEntry::new(SnpCertType::ASK, vec![1; 28]),
     ];
 
-    SnpExtConfig {
-        config: match cfg {
-            true => Some(test_cfg),
-            false => None,
-        },
-        certs: match cert {
-            true => Some(cert_table),
-            false => None,
-        },
-        certs_len: match cert {
-            true => 2,
-            false => 0,
-        },
+    match (cert, cfg) {
+        (true, true) => SnpExtConfig::new(test_cfg, cert_table),
+        (true, false) => SnpExtConfig::update_certs_only(cert_table),
+        (false, true) => SnpExtConfig::update_config_only(test_cfg),
+        (false, false) => SnpExtConfig::default(),
     }
 }
 
