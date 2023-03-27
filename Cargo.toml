@@ -35,6 +35,7 @@ kvm-ioctls = { version = ">=0.12" }
 
 [features]
 serde = ["dep:serde", "dep:serde-big-array", "uuid/serde"]
+openssl = ["dep:openssl"]
 
 [dev-dependencies]
 kvm-bindings = ">=0.6"
