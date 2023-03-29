@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
+
 use crate::util::hexdump;
 
 #[cfg(feature = "openssl")]

@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
 
-pub mod builtin;
 pub mod ecdsa;
 
 #[cfg(feature = "openssl")]
@@ -32,23 +31,6 @@ pub trait Signer<T> {
     fn sign(&self, target: &mut T) -> Result<Self::Output>;
 }
 
-
-#[cfg(feature = "openssl")]
-/// Represents a private key.
-pub struct PrivateKey<U> {
-    id: Option<[u8; 16]>,
-    key: pkey::PKey<pkey::Private>,
-    hash: hash::MessageDigest,
-    usage: U,
-}
-
-#[cfg(feature = "openssl")]
-struct PublicKey<U> {
-    id: Option<[u8; 16]>,
-    key: pkey::PKey<pkey::Public>,
-    hash: hash::MessageDigest,
-    usage: U,
-}
 
 pub(crate) trait FromLe: Sized {
     fn from_le(value: &[u8]) -> Result<Self>;
