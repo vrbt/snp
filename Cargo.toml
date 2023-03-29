@@ -22,16 +22,17 @@ is-it-maintained-issue-resolution = { repository = "virtee/snp" }
 is-it-maintained-open-issues = { repository = "virtee/snp" }
 
 [dependencies]
-bitfield = { version="^0.13" }
-bitflags = { version="^1.2" }
-serde = { version = "^1.0", features = ["derive"], optional = true}
-serde-big-array = { version = "^0.4", optional = true}
-static_assertions = { version = "^1.1" }
+bitfield = "^0.13"
+bitflags = "^1.2"
+static_assertions = "^1.1"
+iocuddle = "^0.1"
+uuid = "^1.2"
+dirs = "^4.0"
+kvm-ioctls = ">=0.12"
+
+serde = { version = "^1.0", features = ["derive"], optional = true }
+serde-big-array = { version = "^0.4", optional = true }
 openssl = { version = "^0.10", optional = true }
-iocuddle = { version = "^0.1" }
-uuid = { version = "^1.2" }
-dirs = { version = "^4.0" }
-kvm-ioctls = { version = ">=0.12" }
 
 [features]
 serde = ["dep:serde", "dep:serde-big-array", "uuid/serde"]
