@@ -304,6 +304,54 @@ impl SnpExtConfig {
     }
 }
 
+impl TryFrom<SnpExtConfig> for FFI::types::SnpGetExtConfig {
+    type Error = uuid::Error;
+
+    fn try_from(value: SnpExtConfig) -> Result<Self, Self::Error> {
+        let mut config_address: u64 = 0u64;
+        let mut certs_address: u64 = 0u64;
+        let certs_len: u32 = value.certs_len;
+
+        if let Some(config) = value.config {
+            config_address = &config as *const SnpConfig as u64;
+        }
+
+        if let Some(certs) = value.certs {
+            certs_address = certs.as_ptr() as u64;
+        }
+
+        Ok(Self {
+            config_address,
+            certs_address,
+            certs_len,
+        })
+    }
+}
+
+impl TryFrom<SnpExtConfig> for FFI::types::SnpSetExtConfig {
+    type Error = uuid::Error;
+
+    fn try_from(value: SnpExtConfig) -> Result<Self, Self::Error> {
+        let mut config_address: u64 = 0u64;
+        let mut certs_address: u64 = 0u64;
+        let certs_len: u32 = value.certs_len;
+
+        if let Some(config) = value.config {
+            config_address = &config as *const SnpConfig as u64;
+        }
+
+        if let Some(certs) = value.certs {
+            certs_address = certs.as_ptr() as u64;
+        }
+
+        Ok(Self {
+            config_address,
+            certs_address,
+            certs_len,
+        })
+    }
+}
+
 impl TryFrom<FFI::types::SnpGetExtConfig> for SnpExtConfig {
     type Error = uuid::Error;
 

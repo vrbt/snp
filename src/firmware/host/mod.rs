@@ -16,7 +16,7 @@ use types::*;
 
 use FFI::ioctl::*;
 
-use self::types::FFI::types::{GetId, TryFromConfig};
+use self::types::FFI::types::GetId;
 
 ///
 /// This is a façade function to give public access to the FFI parse table
@@ -140,10 +140,16 @@ impl Firmware {
     ///
     /// let status: bool = firmware.snp_set_ext_config(ext_config).unwrap();
     /// ```
-    pub fn snp_set_ext_config(&mut self, new_config: SnpExtConfig) -> Result<bool, UserApiError> {
+    pub fn snp_set_ext_config(&mut self, mut new_config: SnpExtConfig) -> Result<bool, UserApiError> {
         let mut bytes: Vec<u8> = vec![];
-        let mut new_ext_config: FFI::types::SnpSetExtConfig =
-            FFI::types::SnpSetExtConfig::from_uapi(&new_config, &mut bytes)?;
+
+        if let Some(ref mut certificates) = new_config.certs {
+            bytes = FFI::types::CertTableEntry::uapi_to_vec_bytes(certificates)?;
+        }
+
+        let mut new_ext_config: FFI::types::SnpSetExtConfig = new_config.try_into()?;
+        new_ext_config.certs_address = bytes.as_mut_ptr() as u64;
+
         SNP_SET_EXT_CONFIG.ioctl(&mut self.0, &mut Command::from_mut(&mut new_ext_config))?;
         Ok(true)
     }

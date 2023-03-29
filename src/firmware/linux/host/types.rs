@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::firmware::host::types as UAPI;
-use crate::{
-    error::{SnpCertError, UserApiError},
-    firmware::linux::guest::types::_4K_PAGE,
-};
+use crate::error::SnpCertError;
 
 use std::marker::PhantomData;
 use uuid::Uuid;
@@ -299,66 +296,6 @@ pub struct SnpSetExtConfig {
     pub certs_len: u32,
 }
 
-impl From<UAPI::SnpExtConfig> for SnpSetExtConfig {
-    fn from(value: UAPI::SnpExtConfig) -> Self {
-        let mut config_address: u64 = 0;
-        let mut certs_address: u64 = 0;
-
-        if let Some(mut configuration) = value.config {
-            config_address = &mut configuration as *mut UAPI::SnpConfig as u64;
-        }
-
-        if let Some(mut certificates) = value.certs {
-            certs_address = certificates.as_mut_ptr() as u64;
-        }
-
-        Self {
-            config_address,
-            certs_address,
-            certs_len: value.certs_len,
-        }
-    }
-}
-
-pub trait TryFromConfig<ConfigType>: From<ConfigType> {
-    type TryFromError;
-
-    fn from_uapi(value: &ConfigType, bytes: &mut Vec<u8>) -> Result<Self, Self::TryFromError>;
-}
-
-impl TryFromConfig<UAPI::SnpExtConfig> for SnpSetExtConfig {
-    type TryFromError = UserApiError;
-
-    fn from_uapi(
-        value: &UAPI::SnpExtConfig,
-        bytes: &mut Vec<u8>,
-    ) -> Result<Self, Self::TryFromError> {
-        // Make sure the buffer is is of sufficient size.
-        if value.certs_len < bytes.len() as u32 {
-            return Err(SnpCertError::BufferOverflow.into());
-        }
-
-        // Make sure the buffer length is 4K-page aligned.
-        if value.certs_len > 0 && value.certs_len as usize % _4K_PAGE != 0 {
-            return Err(SnpCertError::PageMisalignment.into());
-        }
-
-        // Copy the existing information from the user.
-        let mut retval: SnpSetExtConfig = value.clone().into();
-
-        // When certificates are present, create a pointer to the location, and update the length appropriately.
-        if let Some(mut certificates) = value.certs.clone() {
-            // Update the bytes vector with correct bytes.
-            *bytes = CertTableEntry::uapi_to_vec_bytes(&mut certificates)?;
-
-            // Set the pointers to the updated buffer.
-            retval.certs_address = bytes.as_mut_ptr() as u64;
-            retval.certs_len = value.certs_len;
-        }
-
-        Ok(retval)
-    }
-}
 #[repr(C)]
 pub struct SnpGetExtConfig {
     /// Address of the SnpConfig or 0 when reported_tcb should not be
