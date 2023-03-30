@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
+use super::*;
+
 use crate::util::hexdump;
 
 #[cfg(feature = "openssl")]
@@ -9,9 +11,6 @@ use crate::certs::{AsLeBytes, FromLe};
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "serde")]
 use serde_big_array::BigArray;
-
-#[cfg(feature = "openssl")]
-use std::io::{Error, Result};
 
 #[cfg(feature = "openssl")]
 use openssl::{bn, ecdsa};

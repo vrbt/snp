@@ -1,14 +1,28 @@
 // SPDX-License-Identifier: Apache-2.0
 
+#[cfg(feature = "openssl")]
+pub mod cert;
+
+#[cfg(feature = "openssl")]
+pub mod ca;
+
+#[cfg(feature = "openssl")]
+pub mod chain;
+
+#[cfg(feature = "openssl")]
+pub mod builtin;
+
 pub mod ecdsa;
 
 #[cfg(feature = "openssl")]
-use openssl::*;
+use openssl::x509::X509;
+
+pub use cert::Certificate;
 
 #[cfg(feature = "openssl")]
 struct Body;
 
-use std::io::Result;
+use std::io::{Error, ErrorKind, Result};
 
 #[cfg(feature = "openssl")]
 /// An interface for types that may contain entities such as
@@ -30,7 +44,6 @@ pub trait Signer<T> {
     /// Signs the target.
     fn sign(&self, target: &mut T) -> Result<Self::Output>;
 }
-
 
 pub(crate) trait FromLe: Sized {
     fn from_le(value: &[u8]) -> Result<Self>;
