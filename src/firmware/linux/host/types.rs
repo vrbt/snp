@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::firmware::host::types as UAPI;
 use crate::error::SnpCertError;
+use crate::firmware::host::types as UAPI;
 
 use std::marker::PhantomData;
 use uuid::Uuid;

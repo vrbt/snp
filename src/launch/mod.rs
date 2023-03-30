@@ -320,4 +320,3 @@ impl<'a, 'b> Finish<'a, 'b> {
         }
     }
 }
-

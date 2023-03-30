@@ -140,7 +140,10 @@ impl Firmware {
     ///
     /// let status: bool = firmware.snp_set_ext_config(ext_config).unwrap();
     /// ```
-    pub fn snp_set_ext_config(&mut self, mut new_config: SnpExtConfig) -> Result<bool, UserApiError> {
+    pub fn snp_set_ext_config(
+        &mut self,
+        mut new_config: SnpExtConfig,
+    ) -> Result<bool, UserApiError> {
         let mut bytes: Vec<u8> = vec![];
 
         if let Some(ref mut certificates) = new_config.certs {
