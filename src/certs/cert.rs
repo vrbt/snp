@@ -53,12 +53,17 @@ impl Verifiable for (&Certificate, &Certificate) {
 
 impl Certificate {
     /// Create a Certificate from a PEM-encoded X509 structure.
-    fn from_pem(pem: &[u8]) -> Result<Self> {
+    pub fn from_pem(pem: &[u8]) -> Result<Self> {
         Ok(Self(X509::from_pem(pem)?))
     }
 
     /// Create a Certificate from a DER-encoded X509 structure.
-    fn from_der(der: &[u8]) -> Result<Self> {
+    pub fn from_der(der: &[u8]) -> Result<Self> {
         Ok(Self(X509::from_der(der)?))
+    }
+
+    /// Retrieve the underlying X509 public key for a Certificate.
+    pub fn public_key(&self) -> Result<PKey<Public>> {
+        Ok(self.0.public_key()?)
     }
 }

@@ -18,6 +18,7 @@ pub mod ecdsa;
 use openssl::x509::X509;
 
 pub use cert::Certificate;
+pub use chain::Chain;
 
 #[cfg(feature = "openssl")]
 struct Body;

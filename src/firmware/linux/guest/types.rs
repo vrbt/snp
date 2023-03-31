@@ -2,11 +2,20 @@
 
 use std::fmt::Display;
 
+use std::io;
+use std::io::{Error, ErrorKind};
+
 use crate::error::*;
 
-use crate::{certs::ecdsa::Signature, firmware::guest::types::SnpDerivedKey, util::hexdump};
+use crate::{
+    certs::{ecdsa::Signature, Chain, Verifiable},
+    firmware::guest::types::SnpDerivedKey,
+    util::hexdump,
+};
 
 use bitfield::bitfield;
+
+use openssl::{ecdsa::EcdsaSig, sha::Sha384};
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
@@ -431,6 +440,38 @@ Launch TCB:
             self.launch_tcb,
             self.signature
         )
+    }
+}
+
+#[cfg(feature = "openssl")]
+impl Verifiable for (&Chain, &AttestationReport) {
+    type Output = ();
+
+    fn verify(self) -> io::Result<Self::Output> {
+        let vcek = self.0.verify()?;
+
+        let sig = EcdsaSig::try_from(&self.1.signature)?;
+        let measurable_bytes: &[u8] = &bincode::serialize(self.1).map_err(|e| {
+            Error::new(
+                ErrorKind::Other,
+                format!("Unable to serialize bytes: {}", e),
+            )
+        })?[..0x2a0];
+
+        let mut hasher = Sha384::new();
+        hasher.update(measurable_bytes);
+        let base_digest = hasher.finish();
+
+        let ec = vcek.public_key()?.ec_key()?;
+        let signed = sig.verify(&base_digest, &ec)?;
+
+        match signed {
+            true => Ok(()),
+            false => Err(Error::new(
+                ErrorKind::Other,
+                "VCEK does not sign the attestation report",
+            )),
+        }
     }
 }
 
