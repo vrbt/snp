@@ -203,7 +203,7 @@ impl Default for State {
 /// Query the SEV-SNP platform status.
 ///
 /// (Chapter 8.3; Table 38)
-#[derive(Default)]
+#[derive(Default, Debug)]
 #[repr(C)]
 pub struct SnpPlatformStatus {
     /// The firmware API version (major.minor)
