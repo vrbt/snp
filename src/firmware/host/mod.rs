@@ -80,6 +80,25 @@ impl Firmware {
         Ok(platform_status)
     }
 
+    /// Reset the configuration of the AMD secure processor. Useful for resetting the committed_tcb.
+    /// # Example:
+    /// ```ignore
+    /// use snp::firmware::host::*;
+    ///
+    /// let mut firmware: Firmware = Firmware::open().unwrap();
+    ///
+    /// let reset: bool = firmware.snp_reset_config().unwrap();
+    /// ```
+    pub fn snp_reset_config(&mut self) -> Result<bool, UserApiError> {
+        let mut config: FFI::types::SnpSetExtConfig = FFI::types::SnpSetExtConfig {
+            config_address: 0,
+            certs_address: 0,
+            certs_len: 0,
+        };
+
+        SNP_SET_EXT_CONFIG.ioctl(&mut self.0, &mut Command::from_mut(&mut config))?;
+        Ok(true)
+    }
     /// Fetch the SNP Extended Configuration.
     ///
     /// # Example:
