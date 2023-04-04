@@ -84,6 +84,24 @@ fn snp_set_ext_config_std() {
 #[ignore]
 #[test]
 #[serial]
+fn snp_set_ext_invalid_config_std() {
+    let mut fw: Firmware = Firmware::open().unwrap();
+    let platform_status: SnpPlatformStatus = fw.snp_platform_status().unwrap();
+
+    // Using Current TCB as Committed TCB is not available at the moment,
+    // but ideally we would like to check Reported TCB <= Committed TCB, only.
+    let mut invalid_tcb: TcbVersion = platform_status.platform_tcb_version;
+    invalid_tcb.snp += 1;
+    let retval: bool = fw.snp_set_ext_config(SnpExtConfig::update_config_only(SnpConfig::new(invalid_tcb, 0))).unwrap();
+    assert!(!retval);
+    assert!(fw.snp_reset_config().unwrap());
+}
+
+
+#[cfg_attr(not(all(has_sev, feature = "dangerous_hw_tests")), ignore)]
+#[ignore]
+#[test]
+#[serial]
 fn snp_get_ext_config_std() {
     let mut fw: Firmware = Firmware::open().unwrap();
     let new_config: SnpExtConfig = build_ext_config(true, true);
