@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use snp::firmware::host::{
-    types::{CertTableEntry, SnpCertType, SnpConfig, SnpExtConfig, SnpPlatformStatus, TcbVersion},
-    Firmware,
+    CertTableEntry, Firmware, SnpCertType, SnpConfig, SnpExtConfig, SnpPlatformStatus, TcbVersion,
 };
 
 use serial_test::serial;
@@ -92,11 +91,15 @@ fn snp_set_ext_invalid_config_std() {
     // but ideally we would like to check Reported TCB <= Committed TCB, only.
     let mut invalid_tcb: TcbVersion = platform_status.platform_tcb_version;
     invalid_tcb.snp += 1;
-    let retval: bool = fw.snp_set_ext_config(SnpExtConfig::update_config_only(SnpConfig::new(invalid_tcb, 0))).unwrap();
+    let retval: bool = fw
+        .snp_set_ext_config(SnpExtConfig::update_config_only(SnpConfig::new(
+            invalid_tcb,
+            0,
+        )))
+        .unwrap();
     assert!(!retval);
     assert!(fw.snp_reset_config().unwrap());
 }
-
 
 #[cfg_attr(not(all(has_sev, feature = "dangerous_hw_tests")), ignore)]
 #[ignore]

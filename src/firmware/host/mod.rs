@@ -4,7 +4,7 @@
 //!
 //! The Platform Owner, Host, or Cloud Service Provider (CSP). This is the system software, including the hypervisor, where a confidential virtual-machine (VM) or container will be deployed.
 
-pub mod types;
+mod types;
 
 use std::{
     fs::{File, OpenOptions},
@@ -12,7 +12,7 @@ use std::{
 };
 
 use crate::error::*;
-use types::*;
+pub use types::*;
 
 use FFI::ioctl::*;
 

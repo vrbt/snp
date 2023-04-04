@@ -13,7 +13,7 @@ use crate::error::*;
 #[cfg(feature = "openssl")]
 use crate::certs::{Chain, Verifiable};
 
-use crate::{certs::ecdsa::Signature, firmware::guest::types::SnpDerivedKey, util::hexdump};
+use crate::{certs::ecdsa::Signature, firmware::guest::SnpDerivedKey, util::hexdump};
 
 use bitfield::bitfield;
 

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::error::SnpCertError;
-use crate::firmware::host::types as UAPI;
+use crate::firmware::host as UAPI;
 
 use std::marker::PhantomData;
 use uuid::Uuid;
@@ -388,7 +388,7 @@ mod test {
 
     mod cert_table_entry {
 
-        use crate::firmware::host::types as UAPI;
+        use crate::firmware::host as UAPI;
         use crate::firmware::linux::host::types::CertTableEntry;
         use uuid::Uuid;
 

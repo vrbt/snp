@@ -3,7 +3,7 @@ use iocuddle::*;
 use std::marker::PhantomData;
 
 use super::types::*;
-use crate::firmware::host::types::SnpPlatformStatus;
+use crate::firmware::host::SnpPlatformStatus;
 use crate::impl_const_id;
 
 // These enum ordinal values are defined in the Linux kernel

@@ -6,13 +6,13 @@
 //! one or more guest confidential virtual-machines (VM) or containers which
 //! may be deployed in a Platform Owner's environment..
 
-pub mod types;
+mod types;
 
 use std::fs::{File, OpenOptions};
 
-use super::host::types::CertTableEntry;
+use super::host::CertTableEntry;
 use crate::error::*;
-use types::*;
+pub use types::*;
 use GuestFFI::ioctl::*;
 use GuestFFI::types::*;
 

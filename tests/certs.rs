@@ -26,7 +26,7 @@ fn milan_chain() {
 #[cfg(feature = "openssl")]
 #[test]
 fn milan_report() {
-    use snp::firmware::guest::types::AttestationReport;
+    use snp::firmware::guest::AttestationReport;
 
     let ark = milan::ark().unwrap();
     let ask = milan::ask().unwrap();

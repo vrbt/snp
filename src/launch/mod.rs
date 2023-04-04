@@ -9,7 +9,7 @@
 #[cfg(target_os = "linux")]
 mod linux;
 
-use crate::firmware::host::types::Version;
+use crate::firmware::host::Version;
 #[cfg(target_os = "linux")]
 use crate::launch::linux::ioctl::*;
 #[cfg(target_os = "linux")]
