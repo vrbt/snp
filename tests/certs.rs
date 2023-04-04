@@ -1,8 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
+#[cfg(feature = "openssl")]
 use snp::certs::{builtin::milan, ca, Certificate, Chain, Verifiable};
 
+#[cfg(feature = "openssl")]
 const TEST_MILAN_VCEK_DER: &[u8] = include_bytes!("certs_data/vcek_milan.der");
+
+#[cfg(feature = "openssl")]
 const TEST_MILAN_ATTESTATION_REPORT: &[u8] = include_bytes!("certs_data/report_milan.hex");
 
 #[cfg(feature = "openssl")]

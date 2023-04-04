@@ -2,19 +2,22 @@
 
 use std::fmt::Display;
 
+#[cfg(feature = "openssl")]
 use std::io;
+
+#[cfg(feature = "openssl")]
 use std::io::{Error, ErrorKind};
 
 use crate::error::*;
 
-use crate::{
-    certs::{ecdsa::Signature, Chain, Verifiable},
-    firmware::guest::types::SnpDerivedKey,
-    util::hexdump,
-};
+#[cfg(feature = "openssl")]
+use crate::certs::{Chain, Verifiable};
+
+use crate::{certs::ecdsa::Signature, firmware::guest::types::SnpDerivedKey, util::hexdump};
 
 use bitfield::bitfield;
 
+#[cfg(feature = "openssl")]
 use openssl::{ecdsa::EcdsaSig, sha::Sha384};
 
 #[cfg(feature = "serde")]
