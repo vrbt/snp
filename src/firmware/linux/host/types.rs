@@ -97,7 +97,7 @@ pub struct TcbVersion {
 }
 
 impl TcbVersion {
-    /// Creates a new isntance of a TcbVersion
+    /// Creates a new instance of a TcbVersion
     pub fn new(bootloader: u8, tee: u8, snp: u8, microcode: u8) -> Self {
         Self {
             bootloader,
@@ -115,7 +115,7 @@ pub struct SnpConfig {
     /// The TCB_VERSION to report in guest attestation reports.
     pub reported_tcb: TcbVersion,
 
-    /// Indicates that the CHIP_ID field in the attestationr eport will always
+    /// Indicates that the CHIP_ID field in the attestation report will always
     /// be zero.
     pub mask_chip_id: u32,
 

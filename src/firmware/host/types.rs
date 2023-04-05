@@ -467,7 +467,7 @@ pub struct TcbVersion {
 }
 
 impl TcbVersion {
-    /// Creates a new isntance of a TcbVersion
+    /// Creates a new instance of a TcbVersion
     pub fn new(bootloader: u8, tee: u8, snp: u8, microcode: u8) -> Self {
         Self {
             bootloader,
