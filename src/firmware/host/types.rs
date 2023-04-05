@@ -271,7 +271,7 @@ fn round_to_whole_pages(size: usize) -> usize {
 
 impl SnpExtConfig {
     /// Used to only update the AMD Secure Processor certificates with the certificates provided.
-    pub fn update_certs_only(certificates: Vec<CertTableEntry>) -> Self {
+    pub fn new_certs_only(certificates: Vec<CertTableEntry>) -> Self {
         let certs_length: usize = certificates.iter().map(|entry| entry.data().len()).sum();
         let certs_len: u32 = round_to_whole_pages(certs_length) as u32;
 
@@ -283,7 +283,7 @@ impl SnpExtConfig {
     }
 
     /// Used to only update the AMD Secure Processor configuration with the configuration provided.
-    pub fn update_config_only(config: SnpConfig) -> Self {
+    pub fn new_config_only(config: SnpConfig) -> Self {
         Self {
             config: Some(config),
             certs: None,
