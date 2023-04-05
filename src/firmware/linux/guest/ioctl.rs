@@ -3,33 +3,31 @@
 use std::marker::PhantomData;
 
 use crate::firmware::linux::guest::types::{
-    SnpDerivedKeyReq, SnpDerivedKeyRsp, SnpExtReportReq, SnpReportReq, SnpReportRsp,
+    DerivedKeyReq, DerivedKeyRsp, ExtReportReq, ReportReq, ReportRsp,
 };
 use iocuddle::{Group, Ioctl, WriteRead};
 
-pub enum SnpGuestIoctl {
-    SnpGetReport = 0x0,
-    SnpGetDerivedKey = 0x1,
-    SnpGetExtReport = 0x2,
+pub enum GuestIoctl {
+    GetReport = 0x0,
+    GetDerivedKey = 0x1,
+    GetExtReport = 0x2,
     _Undefined,
 }
 
 const SEV: Group = Group::new(b'S');
 
-pub const SNP_GET_REPORT: Ioctl<WriteRead, &SnpGuestRequest<SnpReportReq, SnpReportRsp>> =
-    unsafe { SEV.write_read(SnpGuestIoctl::SnpGetReport as u8) };
+pub const SNP_GET_REPORT: Ioctl<WriteRead, &GuestRequest<ReportReq, ReportRsp>> =
+    unsafe { SEV.write_read(GuestIoctl::GetReport as u8) };
 
-pub const SNP_GET_DERIVED_KEY: Ioctl<
-    WriteRead,
-    &SnpGuestRequest<SnpDerivedKeyReq, SnpDerivedKeyRsp>,
-> = unsafe { SEV.write_read(SnpGuestIoctl::SnpGetDerivedKey as u8) };
+pub const SNP_GET_DERIVED_KEY: Ioctl<WriteRead, &GuestRequest<DerivedKeyReq, DerivedKeyRsp>> =
+    unsafe { SEV.write_read(GuestIoctl::GetDerivedKey as u8) };
 
-pub const SNP_GET_EXT_REPORT: Ioctl<WriteRead, &SnpGuestRequest<SnpExtReportReq, SnpReportRsp>> =
-    unsafe { SEV.write_read(SnpGuestIoctl::SnpGetExtReport as u8) };
+pub const SNP_GET_EXT_REPORT: Ioctl<WriteRead, &GuestRequest<ExtReportReq, ReportRsp>> =
+    unsafe { SEV.write_read(GuestIoctl::GetExtReport as u8) };
 
 /// The default structure used for making requests to the PSP as a guest owner.
 #[repr(C)]
-pub struct SnpGuestRequest<'a, 'b, Req, Rsp> {
+pub struct GuestRequest<'a, 'b, Req, Rsp> {
     /// Message version number (must be non-zero)
     pub message_version: u8,
     /// Request structure address.
@@ -43,7 +41,7 @@ pub struct SnpGuestRequest<'a, 'b, Req, Rsp> {
     _phantom_rsp: PhantomData<&'b mut Rsp>,
 }
 
-impl<'a, 'b, Req, Rsp> SnpGuestRequest<'a, 'b, Req, Rsp> {
+impl<'a, 'b, Req, Rsp> GuestRequest<'a, 'b, Req, Rsp> {
     /// Creates a new request from the addresses provided.
     ///
     /// # Arguments:

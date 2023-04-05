@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use snp::firmware::host::{
-    CertTableEntry, Firmware, SnpCertType, SnpConfig, SnpExtConfig, SnpPlatformStatus, TcbVersion,
+    CertTableEntry, CertType, Config, ExtConfig, Firmware, PlatformStatus, TcbVersion,
 };
 
 use serial_test::serial;
@@ -18,7 +18,7 @@ fn get_identifier() {
 #[test]
 fn platform_status() {
     let mut fw: Firmware = Firmware::open().unwrap();
-    let status: SnpPlatformStatus = fw.snp_platform_status().unwrap();
+    let status: PlatformStatus = fw.snp_platform_status().unwrap();
 
     println!(
         "Platform status ioctl results:
@@ -50,19 +50,19 @@ fn platform_status() {
     );
 }
 
-fn build_ext_config(cert: bool, cfg: bool) -> SnpExtConfig {
-    let test_cfg: SnpConfig = SnpConfig::new(TcbVersion::new(1, 0, 1, 1), 31);
+fn build_ext_config(cert: bool, cfg: bool) -> ExtConfig {
+    let test_cfg: Config = Config::new(TcbVersion::new(1, 0, 1, 1), 31);
 
     let cert_table: Vec<CertTableEntry> = vec![
-        CertTableEntry::new(SnpCertType::ARK, vec![1; 28]),
-        CertTableEntry::new(SnpCertType::ASK, vec![1; 28]),
+        CertTableEntry::new(CertType::ARK, vec![1; 28]),
+        CertTableEntry::new(CertType::ASK, vec![1; 28]),
     ];
 
     match (cert, cfg) {
-        (true, true) => SnpExtConfig::new(test_cfg, cert_table),
-        (true, false) => SnpExtConfig::update_certs_only(cert_table),
-        (false, true) => SnpExtConfig::update_config_only(test_cfg),
-        (false, false) => SnpExtConfig::default(),
+        (true, true) => ExtConfig::new(test_cfg, cert_table),
+        (true, false) => ExtConfig::update_certs_only(cert_table),
+        (false, true) => ExtConfig::update_config_only(test_cfg),
+        (false, false) => ExtConfig::default(),
     }
 }
 
@@ -72,7 +72,7 @@ fn build_ext_config(cert: bool, cfg: bool) -> SnpExtConfig {
 #[serial]
 fn snp_set_ext_config_std() {
     let mut fw: Firmware = Firmware::open().unwrap();
-    let new_config: SnpExtConfig = build_ext_config(true, true);
+    let new_config: ExtConfig = build_ext_config(true, true);
     let set_status: bool = fw.snp_set_ext_config(new_config).unwrap();
     let reset_status: bool = fw.snp_reset_config().unwrap();
     assert!(reset_status);
@@ -85,17 +85,14 @@ fn snp_set_ext_config_std() {
 #[serial]
 fn snp_set_ext_invalid_config_std() {
     let mut fw: Firmware = Firmware::open().unwrap();
-    let platform_status: SnpPlatformStatus = fw.snp_platform_status().unwrap();
+    let platform_status: PlatformStatus = fw.snp_platform_status().unwrap();
 
     // Using Current TCB as Committed TCB is not available at the moment,
     // but ideally we would like to check Reported TCB <= Committed TCB, only.
     let mut invalid_tcb: TcbVersion = platform_status.platform_tcb_version;
     invalid_tcb.snp += 1;
     let retval: bool = fw
-        .snp_set_ext_config(SnpExtConfig::update_config_only(SnpConfig::new(
-            invalid_tcb,
-            0,
-        )))
+        .snp_set_ext_config(ExtConfig::update_config_only(Config::new(invalid_tcb, 0)))
         .unwrap();
     assert!(!retval);
     assert!(fw.snp_reset_config().unwrap());
@@ -107,9 +104,9 @@ fn snp_set_ext_invalid_config_std() {
 #[serial]
 fn snp_get_ext_config_std() {
     let mut fw: Firmware = Firmware::open().unwrap();
-    let new_config: SnpExtConfig = build_ext_config(true, true);
+    let new_config: ExtConfig = build_ext_config(true, true);
     let set_status: bool = fw.snp_set_ext_config(new_config.clone()).unwrap();
-    let hw_config: SnpExtConfig = fw.snp_get_ext_config().unwrap();
+    let hw_config: ExtConfig = fw.snp_get_ext_config().unwrap();
     let reset_status: bool = fw.snp_reset_config().unwrap();
     assert!(reset_status);
     assert!(set_status);
@@ -122,9 +119,9 @@ fn snp_get_ext_config_std() {
 #[serial]
 fn snp_get_ext_config_cert_only() {
     let mut fw: Firmware = Firmware::open().unwrap();
-    let new_config: SnpExtConfig = build_ext_config(true, false);
+    let new_config: ExtConfig = build_ext_config(true, false);
     fw.snp_set_ext_config(new_config.clone()).unwrap();
-    let hw_config: SnpExtConfig = fw.snp_get_ext_config().unwrap();
+    let hw_config: ExtConfig = fw.snp_get_ext_config().unwrap();
     let reset_status: bool = fw.snp_reset_config().unwrap();
     assert!(reset_status);
     assert_eq!(new_config, hw_config);
@@ -136,9 +133,9 @@ fn snp_get_ext_config_cert_only() {
 #[serial]
 fn snp_get_ext_config_cfg_only() {
     let mut fw: Firmware = Firmware::open().unwrap();
-    let new_config: SnpExtConfig = build_ext_config(false, true);
+    let new_config: ExtConfig = build_ext_config(false, true);
     fw.snp_set_ext_config(new_config.clone()).unwrap();
-    let hw_config: SnpExtConfig = fw.snp_get_ext_config().unwrap();
+    let hw_config: ExtConfig = fw.snp_get_ext_config().unwrap();
     let reset_status: bool = fw.snp_reset_config().unwrap();
     assert!(reset_status);
     assert_eq!(new_config, hw_config);

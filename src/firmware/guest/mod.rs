@@ -18,7 +18,7 @@ use GuestFFI::types::*;
 
 // Disabled until upstream Linux kernel is patched.
 //
-// /// Checks the `fw_err` field on the [`SnpGuestRequest`] structure
+// /// Checks the `fw_err` field on the [`GuestRequest`] structure
 // /// to make sure that no errors were encountered by the VMM or the AMD
 // /// Secure Processor.
 // fn check_fw_err(raw_error: RawFwError) -> Result<(), UserApiError> {
@@ -84,12 +84,12 @@ impl Firmware {
     pub fn snp_get_report(
         &mut self,
         message_version: Option<u8>,
-        mut report_request: SnpReportReq,
+        mut report_request: ReportReq,
     ) -> Result<AttestationReport, UserApiError> {
-        let mut report_response: SnpReportRsp = Default::default();
+        let mut report_response: ReportRsp = Default::default();
 
-        let mut request: SnpGuestRequest<SnpReportReq, SnpReportRsp> =
-            SnpGuestRequest::new(message_version, &mut report_request, &mut report_response);
+        let mut request: GuestRequest<ReportReq, ReportRsp> =
+            GuestRequest::new(message_version, &mut report_request, &mut report_response);
 
         SNP_GET_REPORT.ioctl(&mut self.0, &mut request)?;
 
@@ -103,28 +103,27 @@ impl Firmware {
     pub fn snp_get_ext_report(
         &mut self,
         message_version: Option<u8>,
-        mut report_request: SnpReportReq,
+        mut report_request: ReportReq,
     ) -> Result<(AttestationReport, Vec<CertTableEntry>), UserApiError> {
-        let mut report_response: SnpReportRsp = Default::default();
+        let mut report_response: ReportRsp = Default::default();
 
         // Define a buffer to store the certificates in.
         let mut certificate_bytes: Vec<u8>;
 
-        // Due to the complex buffer allocation, we will take the SnpReportReq
+        // Due to the complex buffer allocation, we will take the ReportReq
         // provided by the caller, and create an extended report request object
         // for them.
-        let mut ext_report_request: SnpExtReportReq = SnpExtReportReq::new(&mut report_request);
+        let mut ext_report_request: ExtReportReq = ExtReportReq::new(&mut report_request);
 
         // Construct the object needed to perform the IOCTL request.
         // *NOTE:* This is __important__ because a fw_err value which matches
         // [`INVALID_CERT_BUFFER`] will indicate the buffer was not large
         // enough.
-        let mut guest_request: SnpGuestRequest<SnpExtReportReq, SnpReportRsp> =
-            SnpGuestRequest::new(
-                message_version,
-                &mut ext_report_request,
-                &mut report_response,
-            );
+        let mut guest_request: GuestRequest<ExtReportReq, ReportRsp> = GuestRequest::new(
+            message_version,
+            &mut ext_report_request,
+            &mut report_response,
+        );
 
         // KEEP for Kernels before 47894e0f (5.19), as userspace broke at that hash.
         if let Err(ioctl_error) = SNP_GET_EXT_REPORT.ioctl(&mut self.0, &mut guest_request) {
@@ -151,12 +150,11 @@ impl Firmware {
         if VmmError::InvalidCertificatePageLength == guest_request.fw_err.into() {
             certificate_bytes = vec![0u8; ext_report_request.certs_len as usize];
             ext_report_request.certs_address = certificate_bytes.as_mut_ptr() as u64;
-            let mut guest_request_retry: SnpGuestRequest<SnpExtReportReq, SnpReportRsp> =
-                SnpGuestRequest::new(
-                    message_version,
-                    &mut ext_report_request,
-                    &mut report_response,
-                );
+            let mut guest_request_retry: GuestRequest<ExtReportReq, ReportRsp> = GuestRequest::new(
+                message_version,
+                &mut ext_report_request,
+                &mut report_response,
+            );
             SNP_GET_EXT_REPORT.ioctl(&mut self.0, &mut guest_request_retry)?;
         } else if guest_request.fw_err != 0 {
             // This shouldn't be possible, but if it happens, throw an error.
@@ -168,7 +166,7 @@ impl Firmware {
         unsafe {
             let entries = (ext_report_request.certs_address as *mut HostFFI::types::CertTableEntry)
                 .as_mut()
-                .ok_or(SnpCertError::EmptyCertBuffer)?;
+                .ok_or(CertError::EmptyCertBuffer)?;
             certificates = HostFFI::types::CertTableEntry::parse_table(entries)?;
         }
 
@@ -180,20 +178,20 @@ impl Firmware {
     ///
     /// # Example:
     /// ```ignore
-    /// let request: SnpDerivedKey = SnpDerivedKey::new(false, GuestFieldSelect(1), 0, 0, 0);
+    /// let request: DerivedKey = DerivedKey::new(false, GuestFieldSelect(1), 0, 0, 0);
     ///
     /// let mut fw: Firmware = Firmware::open().unwrap();
-    /// let derived_key: SnpDerivedKeyRsp = fw.snp_get_derived_key(None, request).unwrap();
+    /// let derived_key: DerivedKeyRsp = fw.snp_get_derived_key(None, request).unwrap();
     /// ```
     pub fn snp_get_derived_key(
         &mut self,
         message_version: Option<u8>,
-        derived_key_request: SnpDerivedKey,
+        derived_key_request: DerivedKey,
     ) -> Result<[u8; 32], UserApiError> {
-        let mut ffi_derived_key_request: SnpDerivedKeyReq = derived_key_request.into();
-        let mut ffi_derived_key_response: SnpDerivedKeyRsp = Default::default();
+        let mut ffi_derived_key_request: DerivedKeyReq = derived_key_request.into();
+        let mut ffi_derived_key_response: DerivedKeyRsp = Default::default();
 
-        let mut request: SnpGuestRequest<SnpDerivedKeyReq, SnpDerivedKeyRsp> = SnpGuestRequest::new(
+        let mut request: GuestRequest<DerivedKeyReq, DerivedKeyRsp> = GuestRequest::new(
             message_version,
             &mut ffi_derived_key_request,
             &mut ffi_derived_key_response,

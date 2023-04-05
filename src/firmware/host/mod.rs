@@ -72,10 +72,10 @@ impl Firmware {
     ///
     /// let mut firmware: Firmware = Firmware::open().unwrap();
     ///
-    /// let status: SnpPlatformStatus = firmware.snp_platform_status().unwrap();
+    /// let status: PlatformStatus = firmware.snp_platform_status().unwrap();
     /// ```
-    pub fn snp_platform_status(&mut self) -> Result<SnpPlatformStatus, Indeterminate<Error>> {
-        let mut platform_status: SnpPlatformStatus = SnpPlatformStatus::default();
+    pub fn snp_platform_status(&mut self) -> Result<PlatformStatus, Indeterminate<Error>> {
+        let mut platform_status: PlatformStatus = PlatformStatus::default();
         SNP_PLATFORM_STATUS.ioctl(&mut self.0, &mut Command::from_mut(&mut platform_status))?;
         Ok(platform_status)
     }
@@ -90,7 +90,7 @@ impl Firmware {
     /// let reset: bool = firmware.snp_reset_config().unwrap();
     /// ```
     pub fn snp_reset_config(&mut self) -> Result<bool, UserApiError> {
-        let mut config: FFI::types::SnpSetExtConfig = FFI::types::SnpSetExtConfig {
+        let mut config: FFI::types::SetExtConfig = FFI::types::SetExtConfig {
             config_address: 0,
             certs_address: 0,
             certs_len: 0,
@@ -105,11 +105,11 @@ impl Firmware {
     /// ```ignore
     /// let mut firmware: Firmware = Firmware::open().unwrap();
     ///
-    /// let status: SnpExtConfig = firmware.snp_get_ext_config().unwrap();
+    /// let status: ExtConfig = firmware.snp_get_ext_config().unwrap();
     /// ```
-    pub fn snp_get_ext_config(&mut self) -> Result<SnpExtConfig, UserApiError> {
+    pub fn snp_get_ext_config(&mut self) -> Result<ExtConfig, UserApiError> {
         let mut raw_buf: Vec<u8> = vec![0; _4K_PAGE];
-        let mut config: FFI::types::SnpGetExtConfig = FFI::types::SnpGetExtConfig {
+        let mut config: FFI::types::GetExtConfig = FFI::types::GetExtConfig {
             config_address: 0,
             certs_address: raw_buf.as_mut_ptr() as *mut CertTableEntry as u64,
             certs_len: _4K_PAGE as u32,
@@ -140,36 +140,33 @@ impl Firmware {
     /// pub const ASK: &[u8] = include_bytes!("../../certs/builtin/genoa/ask.pem");
     /// pub const VCEK: &[u8] = include_bytes!("vcek.pem");
     ///
-    /// let configuration: SnpConfig = SnpConfig::new(
+    /// let configuration: Config = Config::new(
     ///     TcbVersion::new(3, 0, 10, 169),
     ///     0,
     /// );
     ///
     /// // Generate a vector of certificates to store in hypervisor memory.
     /// let certificates: Vec<CertTableEntry> = vec![
-    ///     CertTableEntry::new(SnpCertType::ARK, ARK.to_vec()),
-    ///     CertTableEntry::new(SnpCertType::ASK, ASK.to_vec()),
-    ///     CertTableEntry::new(SnpCertType::VCEK, VCEK.to_vec()),
+    ///     CertTableEntry::new(CertType::ARK, ARK.to_vec()),
+    ///     CertTableEntry::new(CertType::ASK, ASK.to_vec()),
+    ///     CertTableEntry::new(CertType::VCEK, VCEK.to_vec()),
     /// ];
     ///
     /// // Call the `new` constructor to generate the extended configuration.
-    /// let ext_config: SnpExtConfig = SnpExtConfig::new(configuration, certificates);
+    /// let ext_config: ExtConfig = ExtConfig::new(configuration, certificates);
     ///
     /// let mut firmware: Firmware = Firmware::open().unwrap();
     ///
     /// let status: bool = firmware.snp_set_ext_config(ext_config).unwrap();
     /// ```
-    pub fn snp_set_ext_config(
-        &mut self,
-        mut new_config: SnpExtConfig,
-    ) -> Result<bool, UserApiError> {
+    pub fn snp_set_ext_config(&mut self, mut new_config: ExtConfig) -> Result<bool, UserApiError> {
         let mut bytes: Vec<u8> = vec![];
 
         if let Some(ref mut certificates) = new_config.certs {
             bytes = FFI::types::CertTableEntry::uapi_to_vec_bytes(certificates)?;
         }
 
-        let mut new_ext_config: FFI::types::SnpSetExtConfig = new_config.try_into()?;
+        let mut new_ext_config: FFI::types::SetExtConfig = new_config.try_into()?;
         new_ext_config.certs_address = bytes.as_mut_ptr() as u64;
 
         SNP_SET_EXT_CONFIG.ioctl(&mut self.0, &mut Command::from_mut(&mut new_ext_config))?;

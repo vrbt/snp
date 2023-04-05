@@ -157,7 +157,7 @@ pub enum UserApiError {
     FirmwareError(Error),
 
     /// User API related errors.
-    ApiError(SnpCertError),
+    ApiError(CertError),
 
     /// Errors returned by the VMM via ioctl().
     VmmError(VmmError),
@@ -218,15 +218,15 @@ impl std::convert::From<std::io::Error> for UserApiError {
     }
 }
 
-impl std::convert::From<SnpCertError> for UserApiError {
-    fn from(cert_error: SnpCertError) -> Self {
+impl std::convert::From<CertError> for UserApiError {
+    fn from(cert_error: CertError) -> Self {
         Self::ApiError(cert_error)
     }
 }
 
 #[derive(Debug)]
 /// Errors which may be encountered through misuse of the User API.
-pub enum SnpCertError {
+pub enum CertError {
     /// Malformed GUID.
     InvalidGUID,
 
@@ -243,20 +243,20 @@ pub enum SnpCertError {
     UnknownError,
 }
 
-impl std::fmt::Display for SnpCertError {
+impl std::fmt::Display for CertError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            SnpCertError::InvalidGUID => write!(f, "Invalid GUID provided in certificate chain."),
-            SnpCertError::PageMisalignment => {
+            CertError::InvalidGUID => write!(f, "Invalid GUID provided in certificate chain."),
+            CertError::PageMisalignment => {
                 write!(f, "Certificate Buffer not aligned with 4K Pages.")
             }
-            SnpCertError::BufferOverflow => {
+            CertError::BufferOverflow => {
                 write!(f, "Buffer overflow prevented: Bytes provided exceed space allocated for the buffer provided.")
             }
-            SnpCertError::UnknownError => {
+            CertError::UnknownError => {
                 write!(f, "Unknown Error encountered within the certificate chain.")
             }
-            SnpCertError::EmptyCertBuffer => {
+            CertError::EmptyCertBuffer => {
                 write!(
                     f,
                     "No certificates were provided by the host, please contact your CSP."
@@ -266,7 +266,7 @@ impl std::fmt::Display for SnpCertError {
     }
 }
 
-impl error::Error for SnpCertError {}
+impl error::Error for CertError {}
 
 /// Error conditions returned by the SEV platform or by layers above it
 /// (i.e., the Linux kernel).

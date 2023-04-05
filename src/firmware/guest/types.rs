@@ -3,7 +3,7 @@ use bitfield::bitfield;
 
 // Export types from the FFI layer which are applicable to the Rust-friendly APIs.
 pub use crate::firmware::linux::guest::types::{
-    AttestationReport, SnpGuestPolicy, SnpPlatformInfo, SnpReportReq, SnpReportRsp, SnpTcbVersion,
+    AttestationReport, GuestPolicy, PlatformInfo, ReportReq, ReportRsp, TcbVersion,
 };
 
 pub(crate) use crate::firmware::linux::guest as GuestFFI;
@@ -11,7 +11,7 @@ pub(crate) use crate::firmware::linux::host as HostFFI;
 
 #[derive(Copy, Clone, Debug)]
 /// Structure of required data for fetching the derived key.
-pub struct SnpDerivedKey {
+pub struct DerivedKey {
     /// Selects the root key to derive the key from.
     /// 0: Indicates VCEK.
     /// 1: Indicates VMRK.
@@ -36,8 +36,8 @@ pub struct SnpDerivedKey {
     pub tcb_version: u64,
 }
 
-impl SnpDerivedKey {
-    /// Create a new instance for requesting an SnpDerivedKey.
+impl DerivedKey {
+    /// Create a new instance for requesting an DerivedKey.
     pub fn new(
         root_key_select: bool,
         guest_field_select: GuestFieldSelect,

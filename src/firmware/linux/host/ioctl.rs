@@ -3,7 +3,7 @@ use iocuddle::*;
 use std::marker::PhantomData;
 
 use super::types::*;
-use crate::firmware::host::SnpPlatformStatus;
+use crate::firmware::host::PlatformStatus;
 use crate::impl_const_id;
 
 // These enum ordinal values are defined in the Linux kernel
@@ -11,9 +11,9 @@ use crate::impl_const_id;
 impl_const_id! {
     pub Id => u32;
     GetId<'_> = 0x8,
-    SnpPlatformStatus = 0x9,
-    SnpSetExtConfig = 0xA,
-    SnpGetExtConfig = 0xB,
+    PlatformStatus = 0x9,
+    SetExtConfig = 0xA,
+    GetExtConfig = 0xB,
 }
 
 const SEV: Group = Group::new(b'S');
@@ -22,16 +22,16 @@ const SEV: Group = Group::new(b'S');
 pub const GET_ID: Ioctl<WriteRead, &Command<GetId<'_>>> = unsafe { SEV.write_read(0) };
 
 /// Return information about the current status and capabilities of the SEV-SNP platform.
-pub const SNP_PLATFORM_STATUS: Ioctl<WriteRead, &Command<SnpPlatformStatus>> =
+pub const SNP_PLATFORM_STATUS: Ioctl<WriteRead, &Command<PlatformStatus>> =
     unsafe { SEV.write_read(0) };
 
 /// Set the SNP Extended Configuration Settings.
 /// C IOCTL calls -> sev_ioctl_snp_set_config
-pub const SNP_SET_EXT_CONFIG: Ioctl<WriteRead, &Command<SnpSetExtConfig>> =
+pub const SNP_SET_EXT_CONFIG: Ioctl<WriteRead, &Command<SetExtConfig>> =
     unsafe { SEV.write_read(0) };
 
 /// Get the SNP Extended Configuration Settings.
-pub const SNP_GET_EXT_CONFIG: Ioctl<WriteRead, &Command<SnpGetExtConfig>> =
+pub const SNP_GET_EXT_CONFIG: Ioctl<WriteRead, &Command<GetExtConfig>> =
     unsafe { SEV.write_read(0) };
 
 /// The Rust-flavored, FFI-friendly version of `struct sev_issue_cmd` which is

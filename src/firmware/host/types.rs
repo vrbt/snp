@@ -59,7 +59,7 @@ pub struct Version {
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 #[repr(C)]
 /// Certificates which are accepted for [`CertTableEntry`](self::CertTableEntry)
-pub enum SnpCertType {
+pub enum CertType {
     /// AMD Root Signing Key (ARK) certificate
     ARK,
 
@@ -76,41 +76,41 @@ pub enum SnpCertType {
     Empty,
 }
 
-impl ToString for SnpCertType {
+impl ToString for CertType {
     fn to_string(&self) -> String {
         match self {
-            SnpCertType::ARK => "c0b406a4-a803-4952-9743-3fb6014cd0ae".to_string(),
-            SnpCertType::ASK => "4ab7b379-bbac-4fe4-a02f-05aef327c782".to_string(),
-            SnpCertType::VCEK => "63da758d-e664-4564-adc5-f4b93be8accd".to_string(),
-            SnpCertType::Empty => "00000000-0000-0000-0000-000000000000".to_string(),
-            SnpCertType::OTHER(guid) => guid.to_string(),
+            CertType::ARK => "c0b406a4-a803-4952-9743-3fb6014cd0ae".to_string(),
+            CertType::ASK => "4ab7b379-bbac-4fe4-a02f-05aef327c782".to_string(),
+            CertType::VCEK => "63da758d-e664-4564-adc5-f4b93be8accd".to_string(),
+            CertType::Empty => "00000000-0000-0000-0000-000000000000".to_string(),
+            CertType::OTHER(guid) => guid.to_string(),
         }
     }
 }
 
-impl TryFrom<SnpCertType> for uuid::Uuid {
+impl TryFrom<CertType> for uuid::Uuid {
     type Error = uuid::Error;
-    fn try_from(value: SnpCertType) -> Result<Self, Self::Error> {
+    fn try_from(value: CertType) -> Result<Self, Self::Error> {
         match value {
-            SnpCertType::ARK => uuid::Uuid::parse_str(&SnpCertType::ARK.to_string()),
-            SnpCertType::ASK => uuid::Uuid::parse_str(&SnpCertType::ASK.to_string()),
-            SnpCertType::VCEK => uuid::Uuid::parse_str(&SnpCertType::VCEK.to_string()),
-            SnpCertType::Empty => uuid::Uuid::parse_str(&SnpCertType::Empty.to_string()),
-            SnpCertType::OTHER(guid) => Ok(guid),
+            CertType::ARK => uuid::Uuid::parse_str(&CertType::ARK.to_string()),
+            CertType::ASK => uuid::Uuid::parse_str(&CertType::ASK.to_string()),
+            CertType::VCEK => uuid::Uuid::parse_str(&CertType::VCEK.to_string()),
+            CertType::Empty => uuid::Uuid::parse_str(&CertType::Empty.to_string()),
+            CertType::OTHER(guid) => Ok(guid),
         }
     }
 }
 
-impl TryFrom<&uuid::Uuid> for SnpCertType {
+impl TryFrom<&uuid::Uuid> for CertType {
     type Error = uuid::Error;
 
     fn try_from(value: &uuid::Uuid) -> Result<Self, Self::Error> {
         Ok(match value.to_string().as_str() {
-            "c0b406a4-a803-4952-9743-3fb6014cd0ae" => SnpCertType::ARK,
-            "4ab7b379-bbac-4fe4-a02f-05aef327c782" => SnpCertType::ASK,
-            "63da758d-e664-4564-adc5-f4b93be8accd" => SnpCertType::VCEK,
-            "00000000-0000-0000-0000-000000000000" => SnpCertType::Empty,
-            _ => SnpCertType::OTHER(*value),
+            "c0b406a4-a803-4952-9743-3fb6014cd0ae" => CertType::ARK,
+            "4ab7b379-bbac-4fe4-a02f-05aef327c782" => CertType::ASK,
+            "63da758d-e664-4564-adc5-f4b93be8accd" => CertType::VCEK,
+            "00000000-0000-0000-0000-000000000000" => CertType::Empty,
+            _ => CertType::OTHER(*value),
         })
     }
 }
@@ -121,7 +121,7 @@ impl TryFrom<&uuid::Uuid> for SnpCertType {
 /// An entry with information regarding a specific certificate.
 pub struct CertTableEntry {
     /// A Specificy certificate type.
-    pub cert_type: SnpCertType,
+    pub cert_type: CertType,
 
     /// The raw data of the certificate.
     pub data: Vec<u8>,
@@ -140,22 +140,22 @@ impl CertTableEntry {
 
     /// Generates a certificate from the str GUID and data provided.
     pub fn from_guid(guid: &uuid::Uuid, data: Vec<u8>) -> Result<Self, uuid::Error> {
-        let cert_type: SnpCertType = match guid.try_into() {
+        let cert_type: CertType = match guid.try_into() {
             Ok(guid) => guid,
             Err(error) => return Err(error),
         };
         Ok(Self { cert_type, data })
     }
 
-    /// Generates a certificate from the SnpCertType and data provided.
-    pub fn new(cert_type: SnpCertType, data: Vec<u8>) -> Self {
+    /// Generates a certificate from the CertType and data provided.
+    pub fn new(cert_type: CertType, data: Vec<u8>) -> Self {
         Self { cert_type, data }
     }
 }
 
 /// Information regarding the SEV-SNP platform's TCB version.
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
-pub struct SnpTcbStatus {
+pub struct TcbStatus {
     /// Installed TCB version.
     pub platform_version: TcbVersion,
 
@@ -167,7 +167,7 @@ pub struct SnpTcbStatus {
 #[repr(C)]
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
-pub struct SnpBuild {
+pub struct Build {
     /// The version information.
     pub version: Version,
 
@@ -205,7 +205,7 @@ impl Default for State {
 /// (Chapter 8.3; Table 38)
 #[derive(Default, Debug)]
 #[repr(C)]
-pub struct SnpPlatformStatus {
+pub struct PlatformStatus {
     /// The firmware API version (major.minor)
     pub version: Version,
 
@@ -234,15 +234,15 @@ pub struct SnpPlatformStatus {
 /// Rust-friendly instance of the SNP Extended Configuration.
 /// It may be used either to fetch or set the configuration.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub struct SnpExtConfig {
+pub struct ExtConfig {
     /// SET:
-    ///     Address of the SnpConfig or 0 when reported_tcb does not need
+    ///     Address of the Config or 0 when reported_tcb does not need
     ///     to be updated.
     ///
     /// GET:
-    ///     Address of the SnpConfig or 0 when reported_tcb should not be
+    ///     Address of the Config or 0 when reported_tcb should not be
     ///     fetched.
-    pub config: Option<SnpConfig>,
+    pub config: Option<Config>,
 
     /// SET:
     ///     Address of extended guest request certificate chain or None when
@@ -269,7 +269,7 @@ fn round_to_whole_pages(size: usize) -> usize {
     }
 }
 
-impl SnpExtConfig {
+impl ExtConfig {
     /// Used to only update the AMD Secure Processor certificates with the certificates provided.
     pub fn new_certs_only(certificates: Vec<CertTableEntry>) -> Self {
         let certs_length: usize = certificates.iter().map(|entry| entry.data().len()).sum();
@@ -283,7 +283,7 @@ impl SnpExtConfig {
     }
 
     /// Used to only update the AMD Secure Processor configuration with the configuration provided.
-    pub fn new_config_only(config: SnpConfig) -> Self {
+    pub fn new_config_only(config: Config) -> Self {
         Self {
             config: Some(config),
             certs: None,
@@ -291,8 +291,8 @@ impl SnpExtConfig {
         }
     }
 
-    /// Creates a new instance of an SnpExtConfig.
-    pub fn new(config: SnpConfig, certificates: Vec<CertTableEntry>) -> Self {
+    /// Creates a new instance of an ExtConfig.
+    pub fn new(config: Config, certificates: Vec<CertTableEntry>) -> Self {
         let certs_length: usize = certificates.iter().map(|entry| entry.data().len()).sum();
         let certs_len: u32 = round_to_whole_pages(certs_length) as u32;
 
@@ -304,16 +304,16 @@ impl SnpExtConfig {
     }
 }
 
-impl TryFrom<SnpExtConfig> for FFI::types::SnpGetExtConfig {
+impl TryFrom<ExtConfig> for FFI::types::GetExtConfig {
     type Error = uuid::Error;
 
-    fn try_from(value: SnpExtConfig) -> Result<Self, Self::Error> {
+    fn try_from(value: ExtConfig) -> Result<Self, Self::Error> {
         let mut config_address: u64 = 0u64;
         let mut certs_address: u64 = 0u64;
         let certs_len: u32 = value.certs_len;
 
         if let Some(config) = value.config {
-            config_address = &config as *const SnpConfig as u64;
+            config_address = &config as *const Config as u64;
         }
 
         if let Some(certs) = value.certs {
@@ -328,16 +328,16 @@ impl TryFrom<SnpExtConfig> for FFI::types::SnpGetExtConfig {
     }
 }
 
-impl TryFrom<SnpExtConfig> for FFI::types::SnpSetExtConfig {
+impl TryFrom<ExtConfig> for FFI::types::SetExtConfig {
     type Error = uuid::Error;
 
-    fn try_from(value: SnpExtConfig) -> Result<Self, Self::Error> {
+    fn try_from(value: ExtConfig) -> Result<Self, Self::Error> {
         let mut config_address: u64 = 0u64;
         let mut certs_address: u64 = 0u64;
         let certs_len: u32 = value.certs_len;
 
         if let Some(config) = value.config {
-            config_address = &config as *const SnpConfig as u64;
+            config_address = &config as *const Config as u64;
         }
 
         if let Some(certs) = value.certs {
@@ -352,13 +352,13 @@ impl TryFrom<SnpExtConfig> for FFI::types::SnpSetExtConfig {
     }
 }
 
-impl TryFrom<FFI::types::SnpGetExtConfig> for SnpExtConfig {
+impl TryFrom<FFI::types::GetExtConfig> for ExtConfig {
     type Error = uuid::Error;
 
-    fn try_from(value: FFI::types::SnpGetExtConfig) -> Result<Self, Self::Error> {
-        let mut config: Option<SnpConfig> = None;
+    fn try_from(value: FFI::types::GetExtConfig) -> Result<Self, Self::Error> {
+        let mut config: Option<Config> = None;
         let mut certs: Option<Vec<CertTableEntry>> = None;
-        if let Some(config_ref) = unsafe { (value.config_address as *mut SnpConfig).as_mut() } {
+        if let Some(config_ref) = unsafe { (value.config_address as *mut Config).as_mut() } {
             config = Some(*config_ref);
         }
 
@@ -376,13 +376,13 @@ impl TryFrom<FFI::types::SnpGetExtConfig> for SnpExtConfig {
     }
 }
 
-impl TryFrom<FFI::types::SnpSetExtConfig> for SnpExtConfig {
+impl TryFrom<FFI::types::SetExtConfig> for ExtConfig {
     type Error = uuid::Error;
 
-    fn try_from(value: FFI::types::SnpSetExtConfig) -> Result<Self, Self::Error> {
-        let mut config: Option<SnpConfig> = None;
+    fn try_from(value: FFI::types::SetExtConfig) -> Result<Self, Self::Error> {
+        let mut config: Option<Config> = None;
         let mut certs: Option<Vec<CertTableEntry>> = None;
-        if let Some(config_ref) = unsafe { (value.config_address as *mut SnpConfig).as_mut() } {
+        if let Some(config_ref) = unsafe { (value.config_address as *mut Config).as_mut() } {
             config = Some(*config_ref);
         }
 
@@ -403,7 +403,7 @@ impl TryFrom<FFI::types::SnpSetExtConfig> for SnpExtConfig {
 /// Sets the system wide configuration values for SNP.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 #[repr(C, packed)]
-pub struct SnpConfig {
+pub struct Config {
     /// The TCB_VERSION to report in guest attestation reports.
     pub reported_tcb: TcbVersion,
 
@@ -415,7 +415,7 @@ pub struct SnpConfig {
     reserved: [u8; 52],
 }
 
-impl Default for SnpConfig {
+impl Default for Config {
     fn default() -> Self {
         Self {
             reported_tcb: Default::default(),
@@ -425,8 +425,8 @@ impl Default for SnpConfig {
     }
 }
 
-impl SnpConfig {
-    /// Used to create a new SnpConfig
+impl Config {
+    /// Used to create a new Config
     pub fn new(reported_tcb: TcbVersion, mask_chip_id: u32) -> Self {
         Self {
             reported_tcb,
@@ -436,8 +436,8 @@ impl SnpConfig {
     }
 }
 
-impl From<FFI::types::SnpConfig> for SnpConfig {
-    fn from(value: FFI::types::SnpConfig) -> Self {
+impl From<FFI::types::Config> for Config {
+    fn from(value: FFI::types::Config) -> Self {
         Self {
             reported_tcb: value.reported_tcb.into(),
             mask_chip_id: value.mask_chip_id,

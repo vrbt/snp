@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::error::SnpCertError;
+use crate::error::CertError;
 use crate::firmware::host as UAPI;
 
 use std::marker::PhantomData;
@@ -111,7 +111,7 @@ impl TcbVersion {
 
 /// Sets the system wide configuration values for SNP.
 #[repr(C, packed)]
-pub struct SnpConfig {
+pub struct Config {
     /// The TCB_VERSION to report in guest attestation reports.
     pub reported_tcb: TcbVersion,
 
@@ -177,9 +177,7 @@ impl CertTableEntry {
     ///
     /// ```
     ///
-    pub fn uapi_to_vec_bytes(
-        table: &mut Vec<UAPI::CertTableEntry>,
-    ) -> Result<Vec<u8>, SnpCertError> {
+    pub fn uapi_to_vec_bytes(table: &mut Vec<UAPI::CertTableEntry>) -> Result<Vec<u8>, CertError> {
         // Create the vector to return for later.
         let mut bytes: Vec<u8> = vec![];
 
@@ -192,7 +190,7 @@ impl CertTableEntry {
         for entry in table.iter() {
             let guid: Uuid = match Uuid::parse_str(&entry.guid_string()) {
                 Ok(uuid) => uuid,
-                Err(_) => return Err(SnpCertError::InvalidGUID),
+                Err(_) => return Err(CertError::InvalidGUID),
             };
 
             // Append the guid to the byte array.
@@ -283,8 +281,8 @@ impl CertTableEntry {
 }
 
 #[repr(C)]
-pub struct SnpSetExtConfig {
-    /// Address of the SnpConfig or 0 when reported_tcb does not need
+pub struct SetExtConfig {
+    /// Address of the Config or 0 when reported_tcb does not need
     /// to be updated.
     pub config_address: u64,
 
@@ -297,8 +295,8 @@ pub struct SnpSetExtConfig {
 }
 
 #[repr(C)]
-pub struct SnpGetExtConfig {
-    /// Address of the SnpConfig or 0 when reported_tcb should not be
+pub struct GetExtConfig {
+    /// Address of the Config or 0 when reported_tcb should not be
     /// fetched.
     pub config_address: u64,
 
@@ -394,11 +392,11 @@ mod test {
 
         fn build_vec_uapi_cert_table() -> Vec<UAPI::CertTableEntry> {
             vec![
-                UAPI::CertTableEntry::new(UAPI::SnpCertType::ARK, vec![1; 25]),
-                UAPI::CertTableEntry::new(UAPI::SnpCertType::ASK, vec![2; 25]),
-                UAPI::CertTableEntry::new(UAPI::SnpCertType::VCEK, vec![5; 15]),
+                UAPI::CertTableEntry::new(UAPI::CertType::ARK, vec![1; 25]),
+                UAPI::CertTableEntry::new(UAPI::CertType::ASK, vec![2; 25]),
+                UAPI::CertTableEntry::new(UAPI::CertType::VCEK, vec![5; 15]),
                 UAPI::CertTableEntry::new(
-                    UAPI::SnpCertType::OTHER(
+                    UAPI::CertType::OTHER(
                         Uuid::parse_str("fbb6ed74-e73e-44ab-8893-4252792d737a").unwrap(),
                     ),
                     vec![7; 6],

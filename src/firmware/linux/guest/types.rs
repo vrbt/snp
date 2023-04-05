@@ -13,7 +13,7 @@ use crate::error::*;
 #[cfg(feature = "openssl")]
 use crate::certs::{Chain, Verifiable};
 
-use crate::{certs::ecdsa::Signature, firmware::guest::SnpDerivedKey, util::hexdump};
+use crate::{certs::ecdsa::Signature, firmware::guest::DerivedKey, util::hexdump};
 
 use bitfield::bitfield;
 
@@ -34,7 +34,7 @@ pub(crate) const _4K_PAGE: usize = 4096;
 const MAX_VMPL: u32 = 3;
 
 #[repr(C)]
-pub struct SnpDerivedKeyReq {
+pub struct DerivedKeyReq {
     /// Selects the root key to derive the key from.
     /// 0: Indicates VCEK.
     /// 1: Indicates VMRK.
@@ -59,8 +59,8 @@ pub struct SnpDerivedKeyReq {
     pub tcb_version: u64,
 }
 
-impl From<SnpDerivedKey> for SnpDerivedKeyReq {
-    fn from(value: SnpDerivedKey) -> Self {
+impl From<DerivedKey> for DerivedKeyReq {
+    fn from(value: DerivedKey) -> Self {
         Self {
             root_key_select: value.get_root_key_select(),
             reserved_0: Default::default(),
@@ -72,8 +72,8 @@ impl From<SnpDerivedKey> for SnpDerivedKeyReq {
     }
 }
 
-impl From<&mut SnpDerivedKey> for SnpDerivedKeyReq {
-    fn from(value: &mut SnpDerivedKey) -> Self {
+impl From<&mut DerivedKey> for DerivedKeyReq {
+    fn from(value: &mut DerivedKey) -> Self {
         Self {
             root_key_select: value.get_root_key_select(),
             reserved_0: Default::default(),
@@ -88,7 +88,7 @@ impl From<&mut SnpDerivedKey> for SnpDerivedKeyReq {
 #[derive(Default, Debug)]
 #[repr(C)]
 /// A raw representation of the PSP Report Response after calling SNP_GET_DERIVED_KEY.
-pub struct SnpDerivedKeyRsp {
+pub struct DerivedKeyRsp {
     /// The status of key derivation operation.
     /// 0h: Success.
     /// 16h: Invalid parameters
@@ -96,7 +96,7 @@ pub struct SnpDerivedKeyRsp {
 
     reserved_0: [u8; 28],
 
-    /// The requested derived key if [`SnpDerivedKeyRsp::status`] is 0h.
+    /// The requested derived key if [`DerivedKeyRsp::status`] is 0h.
     pub key: [u8; 32],
 }
 
@@ -106,9 +106,9 @@ pub struct SnpDerivedKeyRsp {
 /// The certificate buffer *should* be page aligned for the kernel.
 #[repr(C)]
 #[derive(Clone, Copy, Default)]
-pub struct SnpExtReportReq {
-    /// Address of the [`SnpReportReq`].
-    pub data: SnpReportReq,
+pub struct ExtReportReq {
+    /// Address of the [`ReportReq`].
+    pub data: ReportReq,
 
     /// Starting address of the certificate data buffer.
     pub certs_address: u64,
@@ -117,10 +117,10 @@ pub struct SnpExtReportReq {
     pub certs_len: u32,
 }
 
-impl SnpExtReportReq {
+impl ExtReportReq {
     /// Creates a new exteded report with a one, 4K-page
     /// for the certs_address field and the certs_len field.
-    pub fn new(data: &mut SnpReportReq) -> Self {
+    pub fn new(data: &mut ReportReq) -> Self {
         Self {
             data: *data,
             certs_address: u64::MAX,
@@ -133,7 +133,7 @@ impl SnpExtReportReq {
 /// report from the AMD Secure Processor.
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
 #[repr(C)]
-pub struct SnpReportReq {
+pub struct ReportReq {
     /// Guest-provided data to be included int the attestation report
     report_data: [u8; 64],
 
@@ -145,7 +145,7 @@ pub struct SnpReportReq {
     _reserved: [u8; 28],
 }
 
-impl Default for SnpReportReq {
+impl Default for ReportReq {
     fn default() -> Self {
         Self {
             report_data: [0; 64],
@@ -155,8 +155,8 @@ impl Default for SnpReportReq {
     }
 }
 
-impl SnpReportReq {
-    /// Instantiates a new [`SnpReportReq`] for fetching an [`AttestationReport`] from the PSP.
+impl ReportReq {
+    /// Instantiates a new [`ReportReq`] for fetching an [`AttestationReport`] from the PSP.
     ///
     /// # Arguments
     ///
@@ -192,7 +192,7 @@ impl SnpReportReq {
 /// <sup>*[Encrypted Message - sev-guest.h](<https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/uapi/linux/sev-guest.h>)</sup>
 #[derive(Clone, Copy)]
 #[repr(C)]
-pub struct SnpReportRsp {
+pub struct ReportRsp {
     /// The status of key derivation operation.
     ///     0h: Success.
     ///     16h: Invalid parameters.
@@ -215,9 +215,9 @@ pub struct SnpReportRsp {
 //      evaluation of constant value failed attempt to compute
 //      `0_usize - 1_usize`, which would overflow
 //
-const_assert!(std::mem::size_of::<SnpReportRsp>() == 4000);
+const_assert!(std::mem::size_of::<ReportRsp>() == 4000);
 
-impl Default for SnpReportRsp {
+impl Default for ReportRsp {
     fn default() -> Self {
         Self {
             status: Default::default(),
@@ -260,7 +260,7 @@ pub struct AttestationReport {
     /// The guest SVN.
     pub guest_svn: u32,
     /// The guest policy.
-    pub policy: SnpGuestPolicy,
+    pub policy: GuestPolicy,
     /// The family ID provided at launch.
     pub family_id: [u8; 16],
     /// The image ID provided at launch.
@@ -270,9 +270,9 @@ pub struct AttestationReport {
     /// The signature algorithm used to sign this report.
     pub sig_algo: u32,
     /// Current TCB. See SNPTcbVersion
-    pub current_tcb: SnpTcbVersion,
+    pub current_tcb: TcbVersion,
     /// Information about the platform. See PlatformInfo
-    pub plat_info: SnpPlatformInfo,
+    pub plat_info: PlatformInfo,
     /// Private variable as only the first bit is important.
     /// See [`AttestationReport::_author_key_en`].
     _author_key_en: u32,
@@ -298,14 +298,14 @@ pub struct AttestationReport {
     /// Report ID of this guest's migration agent (if applicable).
     pub report_id_ma: [u8; 32],
     /// Reported TCB version used to derive the VCEK that signed this report.
-    pub reported_tcb: SnpTcbVersion,
+    pub reported_tcb: TcbVersion,
     _reserved_1: [u8; 24],
     #[cfg_attr(feature = "serde", serde(with = "BigArray"))]
     /// If MaskChipId is set to 0, Identifier unique to the chip.
     /// Otherwise set to 0h.
     pub chip_id: [u8; 64],
     /// CommittedTCB
-    pub committed_tcb: SnpTcbVersion,
+    pub committed_tcb: TcbVersion,
     /// The build number of CurrentVersion
     pub current_build: u8,
     /// The minor number of CurrentVersion
@@ -321,7 +321,7 @@ pub struct AttestationReport {
     pub committed_major: u8,
     _reserved_3: u8,
     /// The CurrentTcb at the time the guest was launched or imported.
-    pub launch_tcb: SnpTcbVersion,
+    pub launch_tcb: TcbVersion,
     #[cfg_attr(feature = "serde", serde(with = "BigArray"))]
     _reserved_4: [u8; 168],
     /// Signature of bytes 0 to 0x29F inclusive of this report.
@@ -500,7 +500,7 @@ bitfield! {
     #[derive(Default, Clone, Copy)]
     #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
     #[repr(C)]
-    pub struct SnpGuestPolicy(u64);
+    pub struct GuestPolicy(u64);
     impl Debug;
 
     /// ABI_MINOR field: Indicates the minor API version.
@@ -518,7 +518,7 @@ bitfield! {
     pub single_socket_required, _: 20, 20;
 }
 
-impl Display for SnpGuestPolicy {
+impl Display for GuestPolicy {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
@@ -548,7 +548,7 @@ impl Display for SnpGuestPolicy {
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
 
-pub struct SnpTcbVersion {
+pub struct TcbVersion {
     /// Current bootloader version. SVN of PSP Bootloader.
     pub boot_loader: u8,
     /// Current PSP OS version. SVN of PSP Operating System.
@@ -560,7 +560,7 @@ pub struct SnpTcbVersion {
     pub microcode: u8,
 }
 
-impl Display for SnpTcbVersion {
+impl Display for TcbVersion {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
@@ -584,7 +584,7 @@ bitfield! {
     #[derive(Default, Clone, Copy)]
     #[cfg_attr(feature = "serde", derive(Deserialize, Serialize))]
     #[repr(C)]
-    pub struct SnpPlatformInfo(u64);
+    pub struct PlatformInfo(u64);
     impl Debug;
     /// Returns the bit state of TSME.
     pub tsme_enabled, _: 0, 0;
@@ -592,7 +592,7 @@ bitfield! {
     pub smt_enabled, _: 1, 1;
 }
 
-impl Display for SnpPlatformInfo {
+impl Display for PlatformInfo {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
@@ -611,7 +611,7 @@ Platform Info ({}):
 #[cfg(test)]
 mod test {
     mod snp_report_req {
-        use crate::firmware::linux::guest::types::SnpReportReq;
+        use crate::firmware::linux::guest::types::ReportReq;
         #[test]
         pub fn test_new() {
             let report_data: [u8; 64] = [
@@ -620,13 +620,13 @@ mod test {
                 101, 32, 98, 101, 115, 116, 32, 67, 80, 85, 115, 33, 32, 65, 77, 68, 32, 82, 111,
                 99, 107, 115, 33, 33, 33, 33, 33, 33,
             ];
-            let expected: SnpReportReq = SnpReportReq {
+            let expected: ReportReq = ReportReq {
                 report_data,
                 vmpl: 0,
                 _reserved: [0; 28],
             };
 
-            let actual: SnpReportReq = SnpReportReq::new(Some(report_data), 0).unwrap();
+            let actual: ReportReq = ReportReq::new(Some(report_data), 0).unwrap();
 
             assert_eq!(expected, actual);
         }
@@ -640,13 +640,13 @@ mod test {
                 101, 32, 98, 101, 115, 116, 32, 67, 80, 85, 115, 33, 32, 65, 77, 68, 32, 82, 111,
                 99, 107, 115, 33, 33, 33, 33, 33, 33,
             ];
-            let expected: SnpReportReq = SnpReportReq {
+            let expected: ReportReq = ReportReq {
                 report_data,
                 vmpl: 7,
                 _reserved: [0; 28],
             };
 
-            let actual: SnpReportReq = SnpReportReq::new(Some(report_data), 0).unwrap();
+            let actual: ReportReq = ReportReq::new(Some(report_data), 0).unwrap();
 
             assert_eq!(expected, actual);
         }
