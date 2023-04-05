@@ -60,8 +60,8 @@ fn build_ext_config(cert: bool, cfg: bool) -> ExtConfig {
 
     match (cert, cfg) {
         (true, true) => ExtConfig::new(test_cfg, cert_table),
-        (true, false) => ExtConfig::update_certs_only(cert_table),
-        (false, true) => ExtConfig::update_config_only(test_cfg),
+        (true, false) => ExtConfig::new_certs_only(cert_table),
+        (false, true) => ExtConfig::new_config_only(test_cfg),
         (false, false) => ExtConfig::default(),
     }
 }
@@ -92,7 +92,7 @@ fn snp_set_ext_invalid_config_std() {
     let mut invalid_tcb: TcbVersion = platform_status.platform_tcb_version;
     invalid_tcb.snp += 1;
     let retval: bool = fw
-        .snp_set_ext_config(ExtConfig::update_config_only(Config::new(invalid_tcb, 0)))
+        .snp_set_ext_config(ExtConfig::new_config_only(Config::new(invalid_tcb, 0)))
         .unwrap();
     assert!(!retval);
     assert!(fw.snp_reset_config().unwrap());
